@@ -26,7 +26,9 @@ struct TypeCompatibility {
 	// 攻撃側(type1)から防御側(type2)への相性計算
 	// 戻り値は倍率( 0、1/4、1/2、1、2、4、8）
 	// →例えば、ランドロスが森の呪いを受けると氷は8倍になるので、一応8まであり得る
-	double check( std::string &type1, std::string &type2 ) const {
+	// 　→と思ったけど、ここではあくまで単タイプとしてしか比較してないから、0～2までしかないか
+	double check( const std::string &type1, const std::string &type2 ) const {
+		return ( m_table[m_typetable.at( type1 )][m_typetable.at( type2 )] );
 	}
 
 	TypeCompatibility() {
@@ -144,6 +146,49 @@ struct TypeCompatibility {
 			= m_table[m_typetable["ひこう"]][m_typetable["むし"]] = 2;
 		m_table[m_typetable["ひこう"]][m_typetable["いわ"]]
 			= m_table[m_typetable["ひこう"]][m_typetable["はがね"]] = 0.5;
+
+		// いわ（弱点：ほのお・こおり・ひこう・むし、半減：かくとう・じめん・はがね、無効：なし）
+		m_table[m_typetable["いわ"]][m_typetable["ほのお"]]
+			= m_table[m_typetable["いわ"]][m_typetable["こおり"]]
+			= m_table[m_typetable["いわ"]][m_typetable["ひこう"]]
+			= m_table[m_typetable["いわ"]][m_typetable["むし"]] = 2;
+		m_table[m_typetable["いわ"]][m_typetable["かくとう"]]
+			= m_table[m_typetable["いわ"]][m_typetable["じめん"]]
+			= m_table[m_typetable["いわ"]][m_typetable["はがね"]] = 0.5;
+
+		// ゴースト（弱点：エスパー・ゴースト、半減：あく、無効：ノーマル）
+		m_table[m_typetable["ゴースト"]][m_typetable["ゴースト"]]
+			= m_table[m_typetable["ゴースト"]][m_typetable["エスパー"]] = 2;
+		m_table[m_typetable["ゴースト"]][m_typetable["あく"]] = 0.5;
+		m_table[m_typetable["ゴースト"]][m_typetable["ノーマル"]] = 0;
+
+		// ドラゴン（弱点：ドラゴン、半減：はがね、無効：フェアリー）
+		m_table[m_typetable["ドラゴン"]][m_typetable["ドラゴン"]] = 2;
+		m_table[m_typetable["ドラゴン"]][m_typetable["はがね"]] = 0.5;
+		m_table[m_typetable["ドラゴン"]][m_typetable["フェアリー"]] = 0;
+
+		// あく（弱点：エスパー・ゴースト、半減：あく・フェアリー、無効：なし）
+		m_table[m_typetable["あく"]][m_typetable["エスパー"]]
+			= m_table[m_typetable["あく"]][m_typetable["ゴースト"]] = 2;
+		m_table[m_typetable["あく"]][m_typetable["あく"]]
+			= m_table[m_typetable["あく"]][m_typetable["フェアリー"]] = 0.5;
+
+		// はがね（弱点：こおり・いわ・フェアリー、半減：ほのお・みず・でんき・はがね、無効：なし）
+		m_table[m_typetable["はがね"]][m_typetable["こおり"]]
+			= m_table[m_typetable["はがね"]][m_typetable["いわ"]]
+			= m_table[m_typetable["はがね"]][m_typetable["フェアリー"]] = 2;
+		m_table[m_typetable["はがね"]][m_typetable["ほのお"]]
+			= m_table[m_typetable["はがね"]][m_typetable["みず"]]
+			= m_table[m_typetable["はがね"]][m_typetable["でんき"]]
+			= m_table[m_typetable["はがね"]][m_typetable["はがね"]] = 0.5;
+
+		// フェアリー（弱点：かくとう・ドラゴン・あく、半減：ほのお・どく・はがね、無効：なし）
+		m_table[m_typetable["フェアリー"]][m_typetable["かくとう"]]
+			= m_table[m_typetable["フェアリー"]][m_typetable["ドラゴン"]]
+			= m_table[m_typetable["フェアリー"]][m_typetable["あく"]] = 2;
+		m_table[m_typetable["フェアリー"]][m_typetable["ほのお"]]
+			= m_table[m_typetable["フェアリー"]][m_typetable["どく"]]
+			= m_table[m_typetable["フェアリー"]][m_typetable["はがね"]] = 0.5;
 	}
 
 private:

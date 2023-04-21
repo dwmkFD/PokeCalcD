@@ -8,6 +8,9 @@
 #include "PokeCalcDDlg.h"
 #include "afxdialogex.h"
 
+#include "pokemon.hpp"
+#include "pokemove.hpp"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
