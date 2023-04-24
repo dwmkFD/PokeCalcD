@@ -6,6 +6,14 @@
 
 /* ポケモンのデータ定義 */
 
+constexpr unsigned int HP_Index = 0;
+constexpr unsigned int Attack_Index = 1;
+constexpr unsigned int Block_Index = 2;
+constexpr unsigned int Contact_Index = 3;
+constexpr unsigned int Diffence_Index = 4;
+constexpr unsigned int Speed_Index = 5;
+constexpr unsigned int StatusKind = 6;
+
 // ポケモンのデータ
 class PokemonData {
 public:

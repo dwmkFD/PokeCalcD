@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "pokemon.hpp"
+
 
 // CPokeCalcDDlg ダイアログ
 class CPokeCalcDDlg : public CDialogEx
@@ -20,6 +22,32 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
 
+protected:
+	// 実数値
+	CString m_editLv;		// Lv
+	std::vector<CString> m_editStatus; // HABCDSはこの順で、実数値、個体値、努力値の順に格納する
+	std::vector<CScrollBar> m_scrollStatus;
+
+protected:
+	int m_radioBattle;	// シングル or ダブル
+	int m_radioWeather;	// 天候
+	int m_radioField;	// フィールド
+
+	// 処理を統一するために、vectorかmapにしてindexを対応させた方がいいと思う
+	BOOL m_checkGravity;		// 重力
+	BOOL m_checkWonderRoom;		// ワンダールーム
+	BOOL m_checkPlasmaShower;	// プラズマシャワー
+	BOOL m_checkFairyAura;		// フェアリーオーラ
+	BOOL m_checkDarkAura;		// ダークオーラ
+	BOOL m_checkAuraBreak;		// オーラブレイク
+
+	BOOL m_checkReflecter;		// リフレクター
+	BOOL m_checkLightScreen;	// 光の壁
+	BOOL m_checkHelpingHand;	// 手助け
+	BOOL m_checkKiaidame;	// 気合溜め
+	BOOL m_checkJuden;		// 充電
+	BOOL m_checkHaganenoseisin;		// 鋼の精神
+
 
 // 実装
 protected:
@@ -31,4 +59,13 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+
+
+private:
+	void AllEditCheck(); // レベルや個体値、努力値が指定の範囲に収まっているか？をチェックし、溢れていたら丸める
+	void AllCalcStatus(); // 個体値や努力値を修正された場合にステータスを再計算する
+public:
+	afx_msg void OnBnClickedRadioBase( UINT id );
+	afx_msg void OnNMThemeChangedScrollbar( NMHDR *pNMHDR, LRESULT *pResult );
+	afx_msg void OnBnClickedStatusButton( UINT id );
 };
