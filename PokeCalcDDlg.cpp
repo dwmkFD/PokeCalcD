@@ -8,6 +8,7 @@
 #include "PokeCalcDDlg.h"
 #include "afxdialogex.h"
 
+
 #include "pokemon.hpp"
 #include "pokemove.hpp"
 
@@ -57,6 +58,8 @@ END_MESSAGE_MAP()
 
 CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 	: CDialogEx( IDD_POKECALCD_DIALOG, pParent )
+	, m_editValName( _T( "" ) )
+
 	, m_editLv( _T( "50" ) )
 	, m_editStatus( StatusKind * 3 )   // いわゆる3値なので×3
 	, m_scrollStatus( StatusKind * 3 )
@@ -85,6 +88,10 @@ CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange( pDX );
+
+	DDX_Control( pDX, IDC_EDIT1, m_editCtrl_Name );
+	DDX_Text( pDX, IDC_EDIT1, m_editValName );
+
 	DDX_Text( pDX, IDC_EDIT2, m_editLv );
 	DDX_Text( pDX, IDC_EDIT3, m_editStatus[0] );
 	DDX_Text( pDX, IDC_EDIT4, m_editStatus[1] );
@@ -145,6 +152,10 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check( pDX, IDC_CHECK10, m_checkKiaidame );
 	DDX_Check( pDX, IDC_CHECK11, m_checkJuden );
 	DDX_Check( pDX, IDC_CHECK12, m_checkHaganenoseisin );
+
+	DDX_Control( pDX, IDC_COMBO1, m_cmbNature );
+	DDX_Control( pDX, IDC_COMBO12, m_cmbAbility );
+	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
 }
 
 BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
@@ -155,6 +166,7 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 	ON_NOTIFY( NM_THEMECHANGED, IDC_SCROLLBAR1, &CPokeCalcDDlg::OnNMThemeChangedScrollbar )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeCalcDDlg::OnBnClickedStatusButton )
+	ON_EN_CHANGE( IDC_EDIT1, &CPokeCalcDDlg::OnChangeEdit1 )
 END_MESSAGE_MAP()
 
 
@@ -190,6 +202,11 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 
 	// TODO: 初期化をここに追加します。
+
+	initNature();	// 性格コンボボックスを初期化して「頑張り屋」を選んでおく
+	initAbility();	// 特性コンボボックスを初期化
+	initItem();		// 持ち物コンボボックスを初期化
+
 
 	// 個体値と努力値の初期値を入れておく
 	for ( int i = 0; i < StatusKind; ++i )
@@ -249,6 +266,87 @@ void CPokeCalcDDlg::OnPaint()
 HCURSOR CPokeCalcDDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+
+/* 初期化系 */
+// 性格コンボボックスの初期化
+void CPokeCalcDDlg::initNature()
+{
+	m_cmbNature.AddString( _T( "さみしがり A+ B-" ) );
+	m_cmbNature.AddString( _T( "いじっぱり A+ C-" ) );
+	m_cmbNature.AddString( _T( "やんちゃ A+ D-" ) );
+	m_cmbNature.AddString( _T( "ゆうかん A+ S-" ) );
+	m_cmbNature.AddString( _T( "ずぶとい B+ A-" ) );
+	m_cmbNature.AddString( _T( "わんぱく B+ C-" ) );
+	m_cmbNature.AddString( _T( "のうてんき B+ D-" ) );
+	m_cmbNature.AddString( _T( "のんき B+ S-" ) );
+	m_cmbNature.AddString( _T( "ひかえめ C+ A-" ) );
+	m_cmbNature.AddString( _T( "おっとり C+ B-" ) );
+	m_cmbNature.AddString( _T( "うっかりや C+ D-" ) );
+	m_cmbNature.AddString( _T( "れいせい C+ S-" ) );
+	m_cmbNature.AddString( _T( "おだやか D+ A-" ) );
+	m_cmbNature.AddString( _T( "おとなしい D+ B-" ) );
+	m_cmbNature.AddString( _T( "しんちょう D+ C-" ) );
+	m_cmbNature.AddString( _T( "なまいき D+ S-" ) );
+	m_cmbNature.AddString( _T( "おくびょう S+ A-" ) );
+	m_cmbNature.AddString( _T( "せっかち S+ B-" ) );
+	m_cmbNature.AddString( _T( "ようき S+ C-" ) );
+	m_cmbNature.AddString( _T( "むじゃき S+ D-" ) );
+	m_cmbNature.AddString( _T( "がんばりや" ) );
+	m_cmbNature.AddString( _T( "すなお" ) );
+	m_cmbNature.AddString( _T( "まじめ" ) );
+	m_cmbNature.AddString( _T( "てれや" ) );
+	m_cmbNature.AddString( _T( "きまぐれ" ) );
+
+	m_cmbNature.SetCurSel( 20 ); // がんばり屋にしておく
+}
+
+// 特性コンボボックスの初期化
+void CPokeCalcDDlg::initAbility()
+{
+	m_cmbAbility.AddString( _T( "(未発動)" ) );
+	m_cmbAbility.SetCurSel( 0 );
+}
+
+// 持ち物コンボボックスの初期化
+void CPokeCalcDDlg::initItem()
+{
+	m_cmbItem.AddString( _T( "(未発動)" ) );
+	m_cmbItem.AddString( _T( "(攻撃系)" ) );
+	m_cmbItem.AddString( _T( "タイプ強化" ) );
+	m_cmbItem.AddString( _T( "ノーマルジュエル" ) );
+	m_cmbItem.AddString( _T( "いのちのたま" ) );
+	m_cmbItem.AddString( _T( "こころのしずく" ) );
+	m_cmbItem.AddString( _T( "こだわりハチマキ" ) );
+	m_cmbItem.AddString( _T( "こだわりメガネ" ) );
+	m_cmbItem.AddString( _T( "こんごうだま" ) );
+	m_cmbItem.AddString( _T( "しらたま" ) );
+	m_cmbItem.AddString( _T( "しんかいのキバ" ) );
+	m_cmbItem.AddString( _T( "するどいツメ" ) );
+	m_cmbItem.AddString( _T( "たつじんのおび" ) );
+	m_cmbItem.AddString( _T( "ちからのハチマキ" ) );
+	m_cmbItem.AddString( _T( "でんきだま" ) );
+	m_cmbItem.AddString( _T( "ながねぎ" ) );
+	m_cmbItem.AddString( _T( "はっきんだま" ) );
+	m_cmbItem.AddString( _T( "ピントレンズ" ) );
+	m_cmbItem.AddString( _T( "ふといホネ" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(1回目)" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(2回目)" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(3回目)" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(4回目)" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(5回目)" ) );
+	m_cmbItem.AddString( _T( "メトロノーム(6回目以降)" ) );
+	m_cmbItem.AddString( _T( "ものしりメガネ" ) );
+	m_cmbItem.AddString( _T( "ラッキーパンチ" ) );
+	m_cmbItem.AddString( _T( "(防御系)" ) );
+	m_cmbItem.AddString( _T( "半減木の実" ) );
+	m_cmbItem.AddString( _T( "くろいてっきゅう" ) );
+	m_cmbItem.AddString( _T( "しんかいのウロコ" ) );
+	m_cmbItem.AddString( _T( "しんかのきせき" ) );
+	m_cmbItem.AddString( _T( "とつげきチョッキ" ) );
+	m_cmbItem.AddString( _T( "メタルパウダー" ) );
+	m_cmbAbility.SetCurSel( 0 );
 }
 
 
@@ -385,4 +483,17 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	}
 
 	UpdateData( FALSE );
+}
+
+
+
+void CPokeCalcDDlg::OnChangeEdit1()
+{
+	// TODO: これが RICHEDIT コントロールの場合、このコントロールが
+	// この通知を送信するには、CDialogEx::OnInitDialog() 関数をオーバーライドし、
+	// CRichEditCtrl().SetEventMask() を関数し呼び出します。
+	// OR 状態の ENM_CHANGE フラグをマスクに入れて呼び出す必要があります。
+
+	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
+
 }

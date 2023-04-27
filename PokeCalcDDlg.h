@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <afxdb.h>
+
 #include "pokemon.hpp"
 
 
@@ -23,10 +25,25 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
 
 protected:
+	CDatabase m_database; // データベース
+
+	CEdit m_editCtrl_Name;	// 名前
+	CString m_editValName;	// 名前(値型)
+	CComboBox m_cmbNature;	// 性格
+	CComboBox m_cmbAbility;	// 特性
+	CComboBox m_cmbItem;	// 持ち物
+
+
 	// 実数値
 	CString m_editLv;		// Lv
 	std::vector<CString> m_editStatus; // HABCDSはこの順で、実数値、個体値、努力値の順に格納する
 	std::vector<CScrollBar> m_scrollStatus;
+
+private:
+	/* 初期化 */
+	void initNature();  // 性格コンボボックスの初期化
+	void initAbility(); // 特性コンボボックスの初期化
+	void initItem();    // 持ち物コンボボックスの初期化
 
 protected:
 	int m_radioBattle;	// シングル or ダブル
@@ -68,4 +85,5 @@ public:
 	afx_msg void OnBnClickedRadioBase( UINT id );
 	afx_msg void OnNMThemeChangedScrollbar( NMHDR *pNMHDR, LRESULT *pResult );
 	afx_msg void OnBnClickedStatusButton( UINT id );
+	afx_msg void OnChangeEdit1();
 };
