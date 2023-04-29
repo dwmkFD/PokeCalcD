@@ -7,6 +7,7 @@
 #include <afxdb.h>
 
 #include "pokemon.hpp"
+#include "util.hpp"
 
 
 // CPokeCalcDDlg ダイアログ
@@ -26,6 +27,7 @@ public:
 
 protected:
 	CDatabase m_database; // データベース
+	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
 
 	CEdit m_editCtrl_Name;	// 名前
 	CString m_editValName;	// 名前(値型)

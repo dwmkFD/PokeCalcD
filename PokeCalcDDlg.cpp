@@ -11,6 +11,7 @@
 
 #include "pokemon.hpp"
 #include "pokemove.hpp"
+#include "util.hpp"
 
 #include <algorithm>
 
@@ -207,6 +208,9 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	initAbility();	// 特性コンボボックスを初期化
 	initItem();		// 持ち物コンボボックスを初期化
 
+	// データベース接続
+	CString strConnection = _T( "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=.\\PokeData.accdb;UID=;Pwd=" );
+	m_database.OpenEx( strConnection, CDatabase::openReadOnly | CDatabase::noOdbcDialog );
 
 	// 個体値と努力値の初期値を入れておく
 	for ( int i = 0; i < StatusKind; ++i )
@@ -374,6 +378,8 @@ void CPokeCalcDDlg::AllEditCheck()
 
 void CPokeCalcDDlg::AllCalcStatus()
 {
+	// 種族値も必要だがどうやって持ってくる…？
+	// -> m_editStatusの4つ目に入れておく？
 }
 
 // ラジオボタン制御のベース関数
@@ -496,4 +502,53 @@ void CPokeCalcDDlg::OnChangeEdit1()
 
 	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
 
+	// これもしかしてエディットボックスじゃなくてコンボボックスが良いのでは…？？
+
+	/* 入力された文字からデータベースを検索する */
+	UpdateData( TRUE ); // エディットボックスの入力中の文字を変数側に反映させる
+	CRecordset rs( &m_database );
+	try {
+		CString strSQL;
+		strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前 Like '*%s*'" ), m_trans.exec( m_editValName ) );
+		auto res = rs.Open( CRecordset::forwardOnly, strSQL );
+		CODBCFieldInfo fi;
+		short nFields = rs.GetODBCFieldCount();
+		while ( rs.IsEOF() != FALSE )
+		{
+			for ( int i = 0; i < nFields; ++i )
+			{
+//				rs.GetODBCFieldInfo( i, fi );
+//				MessageBox( fi.m_strName, _T( "info" ), MB_ICONINFORMATION );
+				CString strValue;
+				rs.GetFieldValue( i, strValue );
+				MessageBox( strValue, _T( "value" ), MB_ICONINFORMATION );
+			}
+
+			rs.MoveNext();
+		}
+
+		// エディットボックス（にするかコンボボックスにするかは要検討）に反映させて閉じる
+		// 反映させる処理
+		UpdateData( FALSE );
+
+		rs.Close();
+	} catch ( CDBException &e ) {
+		TCHAR msg[1024];
+		e.GetErrorMessage( msg, sizeof( msg ) );
+		MessageBox( msg, _T( "error" ), MB_ICONERROR );
+	}
+
+	// たぶんここじゃないけど、実装メモを兼ねて
+	try {
+		// 実際にポケモンが選ばれたら、種族値から実数値を自動入力したい
+		CString strSQL;
+		strSQL.Format( _T( "select * from pokemon where 名前 Like '*%s*'" ), m_editValName ); // フィールドは全部取るのでselect *にする
+		rs.Open( CRecordset::forwardOnly, strSQL );
+		CODBCFieldInfo fi;
+		for ( int i = 3; i < 8; ++i ) // 何番目のフィールドかはデータベース見て直値で入れておく（本当は良くないけど…）
+		{
+			rs.GetODBCFieldInfo( i, fi );
+			m_editStatus[i - 3] = fi.m_strName; // 計算用の関数を呼ぶべき
+		}
+	} catch ( ... ) {}
 }

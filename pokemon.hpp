@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+#include <afxstr.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -40,9 +42,9 @@ private:
 
 	// タイプ
 	// ハロウィンとか森の呪いとかにも対応する(2つ以上に増える可能性がある)への対応のため、vectorにしておく
-	std::vector<std::string> m_type;
+	std::vector<CString> m_type;
 
 	// 特性
-	std::vector<std::string> m_ability;
+	std::vector<CString> m_ability;
 };
 
