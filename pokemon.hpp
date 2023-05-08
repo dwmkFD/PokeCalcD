@@ -19,7 +19,6 @@ constexpr unsigned int StatusKind = 6;
 // ポケモンのデータ
 class PokemonData {
 public:
-private:
 	// HABCDS
 	int m_HitPoint;
 	int m_Attack;
@@ -44,7 +43,8 @@ private:
 	// ハロウィンとか森の呪いとかにも対応する(2つ以上に増える可能性がある)への対応のため、vectorにしておく
 	std::vector<CString> m_type;
 
-	// 特性
-	std::vector<CString> m_ability;
+	std::vector<CString> m_ability;	// 特性
+
+	std::vector<CString> m_move; // 覚える技
 };
 

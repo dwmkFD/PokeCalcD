@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+#include <afxstr.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -11,13 +13,26 @@
 // [余談]わざは英語版では「move」なのだが、色々と競合しそうなので、PokeMoveにしておいた
 class PokeMove {
 public:
-private:
-	std::string m_name; // 技名
-	std::string m_type; // 技のタイプ
-	std::string m_category; // 技の分類（物理、特殊、変化技）
+	PokeMove( CString name, CString type, int category, int power, int accuracy, bool direct )
+	{
+		m_name = name; m_type = type; m_category = category;
+		m_power = power; m_accuracy = accuracy; m_direct = direct;
+		m_range = -1;
+	}
+
+	void setRange( int range ) { m_range = range; }
+	static int getCategory( CString strCategory ) {
+		if ( strCategory == _T( "物理" ) ) return ( -1 );
+		else if ( strCategory == _T( "変化" ) ) return ( 0 );
+		else return ( 1 );
+	}
+
+	CString m_name; // 技名
+	CString m_type; // 技のタイプ
+	int m_category; // 技の分類（物理 -1、変化技 0、特殊 1）
 	int m_power; // 技の威力
 	int m_accuracy; // 技の命中率
-	int m_range; // 技の範囲（単体、全体、相手全体 → ダブルで威力の判定に使用する(後者は一つにまとめても良いかもしれない)）
+	int m_range; // 技の範囲（単体 -1、全体 1、相手全体 1 → ダブルで威力の判定に使用する(後者は一つにまとめても良いかもしれない)）
 	bool m_direct; // 接触攻撃か否か（鮫肌とかの反撃で落ちるかどうかを計算結果に含むなら）
 };
 
