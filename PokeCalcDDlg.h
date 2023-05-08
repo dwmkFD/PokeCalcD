@@ -41,11 +41,13 @@ protected:
 	std::vector<CString> m_editStatus; // HABCDSはこの順で、実数値、個体値、努力値の順に格納する
 	std::vector<CScrollBar> m_scrollStatus;
 
+	CComboBox m_cmbTeraType; // テラスタイプ
 private:
 	/* 初期化 */
 	void initNature();  // 性格コンボボックスの初期化
 	void initAbility(); // 特性コンボボックスの初期化
 	void initItem();    // 持ち物コンボボックスの初期化
+	void initTeraType(); // テラスタイプコンボボックスの初期化
 
 protected:
 	int m_radioBattle;	// シングル or ダブル

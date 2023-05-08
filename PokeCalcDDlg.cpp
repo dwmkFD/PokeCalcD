@@ -157,6 +157,7 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control( pDX, IDC_COMBO1, m_cmbNature );
 	DDX_Control( pDX, IDC_COMBO12, m_cmbAbility );
 	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
+	DDX_Control( pDX, IDC_COMBO14, m_cmbTeraType );
 }
 
 BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
@@ -207,6 +208,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	initNature();	// 性格コンボボックスを初期化して「頑張り屋」を選んでおく
 	initAbility();	// 特性コンボボックスを初期化
 	initItem();		// 持ち物コンボボックスを初期化
+	initTeraType(); // テラスタイプコンボボックスを初期化
 
 	// データベース接続
 	CString strConnection = _T( "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=.\\PokeData.accdb;UID=;Pwd=" );
@@ -353,6 +355,29 @@ void CPokeCalcDDlg::initItem()
 	m_cmbAbility.SetCurSel( 0 );
 }
 
+void CPokeCalcDDlg::initTeraType()
+{
+	m_cmbTeraType.AddString( _T( "テラスタイプ" ) );
+	m_cmbTeraType.AddString( _T( "ノーマル" ) );
+	m_cmbTeraType.AddString( _T( "ほのお" ) );
+	m_cmbTeraType.AddString( _T( "みず" ) );
+	m_cmbTeraType.AddString( _T( "でんき" ) );
+	m_cmbTeraType.AddString( _T( "くさ" ) );
+	m_cmbTeraType.AddString( _T( "こおり" ) );
+	m_cmbTeraType.AddString( _T( "かくとう" ) );
+	m_cmbTeraType.AddString( _T( "どく" ) );
+	m_cmbTeraType.AddString( _T( "じめん" ) );
+	m_cmbTeraType.AddString( _T( "ひこう" ) );
+	m_cmbTeraType.AddString( _T( "エスパー" ) );
+	m_cmbTeraType.AddString( _T( "むし" ) );
+	m_cmbTeraType.AddString( _T( "いわ" ) );
+	m_cmbTeraType.AddString( _T( "ゴースト" ) );
+	m_cmbTeraType.AddString( _T( "ドラゴン" ) );
+	m_cmbTeraType.AddString( _T( "あく" ) );
+	m_cmbTeraType.AddString( _T( "はがね" ) );
+	m_cmbTeraType.AddString( _T( "フェアリー" ) );
+	m_cmbTeraType.SetCurSel( 0 );
+}
 
 // 値チェックと補正
 void CPokeCalcDDlg::AllEditCheck()
