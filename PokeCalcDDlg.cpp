@@ -9,9 +9,10 @@
 #include "afxdialogex.h"
 
 
+#include "util.hpp"
 #include "pokemon.hpp"
 #include "pokemove.hpp"
-#include "util.hpp"
+#include "damage.hpp"
 
 #include <algorithm>
 
@@ -213,6 +214,9 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	// データベース接続
 	CString strConnection = _T( "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=.\\PokeData.accdb;UID=;Pwd=" );
 	m_database.OpenEx( strConnection, CDatabase::openReadOnly | CDatabase::noOdbcDialog );
+
+	// ダメージ計算クラス初期化
+	m_damage.reset( new CCalcDamage( &m_database ) );
 
 	// 個体値と努力値の初期値を入れておく
 	for ( int i = 0; i < StatusKind; ++i )
@@ -534,11 +538,19 @@ void CPokeCalcDDlg::OnChangeEdit1()
 	CRecordset rs( &m_database );
 	try {
 		CString strSQL;
-		strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前 Like '*%s*'" ), m_trans.exec( m_editValName ) );
+		CString tmpTrans = m_trans.exec( m_editValName );
+		if ( tmpTrans.IsEmpty() == FALSE )
+		{
+			strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前 Like '%%%s%%'" ), m_trans.exec( m_editValName ) );
+		}
+		else
+		{
+			return;
+		}
 		auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 		CODBCFieldInfo fi;
 		short nFields = rs.GetODBCFieldCount();
-		while ( rs.IsEOF() != FALSE )
+		while ( rs.IsEOF() == FALSE )
 		{
 			for ( int i = 0; i < nFields; ++i )
 			{

@@ -13,6 +13,8 @@
 // [余談]わざは英語版では「move」なのだが、色々と競合しそうなので、PokeMoveにしておいた
 class PokeMove {
 public:
+	PokeMove() = default;
+
 	PokeMove( CString name, CString type, int category, int power, int accuracy, bool direct )
 	{
 		m_name = name; m_type = type; m_category = category;

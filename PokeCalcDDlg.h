@@ -6,8 +6,13 @@
 
 #include <afxdb.h>
 
-#include "pokemon.hpp"
+#include <vector>
+#include <map>
+#include <memory>
+
 #include "util.hpp"
+#include "pokemon.hpp"
+#include "damage.hpp"
 
 
 // CPokeCalcDDlg ダイアログ
@@ -25,6 +30,9 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
 
+private:
+	std::unique_ptr<CCalcDamage> m_damage; // ダメージ計算
+
 protected:
 	CDatabase m_database; // データベース
 	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
@@ -34,7 +42,6 @@ protected:
 	CComboBox m_cmbNature;	// 性格
 	CComboBox m_cmbAbility;	// 特性
 	CComboBox m_cmbItem;	// 持ち物
-
 
 	// 実数値
 	CString m_editLv;		// Lv

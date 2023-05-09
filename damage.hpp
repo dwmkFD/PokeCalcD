@@ -36,7 +36,7 @@ public:
 	static constexpr int ITEM_LIFEORB = 0x40; // –½‚ÌŽì
 };
 
-class CCalcDamage{
+class CCalcDamage {
 public:
 	CCalcDamage( CDatabase *db )
 	{
@@ -48,9 +48,9 @@ public:
 			strSQL.Format( _T( "SELECT * FROM move" ) );
 			auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 			CODBCFieldInfo fi;
-			short nFields = rs.GetODBCFieldCount();
+			int nFields = rs.GetODBCFieldCount();
 			std::vector<CDBVariant> var( nFields );
-			while ( rs.IsEOF() != FALSE )
+			while ( rs.IsEOF() == FALSE )
 			{
 				for ( int i = 0; i < nFields; ++i )
 				{
