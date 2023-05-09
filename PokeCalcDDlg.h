@@ -10,6 +10,8 @@
 #include <map>
 #include <memory>
 
+#include "CComplDataDlg.h"
+
 #include "util.hpp"
 #include "pokemon.hpp"
 #include "damage.hpp"
@@ -34,6 +36,8 @@ private:
 	std::unique_ptr<CCalcDamage> m_damage; // ダメージ計算
 
 protected:
+	CComplDataDlg m_complDlg; // ポケモン名の補完に使うダイアログボックス
+
 	CDatabase m_database; // データベース
 	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
 

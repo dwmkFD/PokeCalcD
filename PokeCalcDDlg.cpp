@@ -205,6 +205,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 
 	// TODO: 初期化をここに追加します。
+	m_complDlg.Create( IDD_POPUP_COMPLDATA, this ); // 補完ダイアログボックスを初期化する
 
 	initNature();	// 性格コンボボックスを初期化して「頑張り屋」を選んでおく
 	initAbility();	// 特性コンボボックスを初期化
@@ -532,6 +533,7 @@ void CPokeCalcDDlg::OnChangeEdit1()
 	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
 
 	// これもしかしてエディットボックスじゃなくてコンボボックスが良いのでは…？？
+	// -> ポップアップウィンドウでなんとかならないか…？
 
 	/* 入力された文字からデータベースを検索する */
 	UpdateData( TRUE ); // エディットボックスの入力中の文字を変数側に反映させる
@@ -550,6 +552,7 @@ void CPokeCalcDDlg::OnChangeEdit1()
 		auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 		CODBCFieldInfo fi;
 		short nFields = rs.GetODBCFieldCount();
+		std::vector<CString> nameList;
 		while ( rs.IsEOF() == FALSE )
 		{
 			for ( int i = 0; i < nFields; ++i )
@@ -558,13 +561,26 @@ void CPokeCalcDDlg::OnChangeEdit1()
 //				MessageBox( fi.m_strName, _T( "info" ), MB_ICONINFORMATION );
 				CString strValue;
 				rs.GetFieldValue( i, strValue );
-				MessageBox( strValue, _T( "value" ), MB_ICONINFORMATION );
+				if ( i == 1 ) nameList.emplace_back( strValue ); // ちょっと試したいので暫定処理で
+//				MessageBox( strValue, _T( "value" ), MB_ICONINFORMATION );
 			}
 
 			rs.MoveNext();
 		}
 
-		// エディットボックス（にするかコンボボックスにするかは要検討）に反映させて閉じる
+		// ポケモンが見つかった場合
+		if ( nameList.size() > 0 )
+		{
+			m_complDlg.setListBox( nameList );
+
+			CRect rect;
+			m_editCtrl_Name.GetWindowRect( &rect );
+			rect.bottom = rect.top + nameList.size() * 24; // 24px × ポケモンの数くらいにしてみる
+			m_complDlg.MoveWindow( &rect );
+			m_complDlg.ShowWindow( SW_SHOW );
+		}
+
+		// エディットボックス（にするかコンボボックスにするかは要検討）に反映させて閉じる -> 補完ダイアログからの入力を受けて反映させたい
 		// 反映させる処理
 		UpdateData( FALSE );
 
@@ -575,11 +591,11 @@ void CPokeCalcDDlg::OnChangeEdit1()
 		MessageBox( msg, _T( "error" ), MB_ICONERROR );
 	}
 
-	// たぶんここじゃないけど、実装メモを兼ねて
+	// たぶんここじゃないけど、実装メモを兼ねて -> ポップアップウィンドウからポケモンを選択されたらこの処理を動かしたい -> 別ダイアログに移植かな…？
 	try {
 		// 実際にポケモンが選ばれたら、種族値から実数値を自動入力したい
 		CString strSQL;
-		strSQL.Format( _T( "select * from pokemon where 名前 Like '*%s*'" ), m_editValName ); // フィールドは全部取るのでselect *にする
+		strSQL.Format( _T( "select * from pokemon where 名前 Like '%%%s%%'" ), m_editValName ); // フィールドは全部取るのでselect *にする
 		rs.Open( CRecordset::forwardOnly, strSQL );
 		CODBCFieldInfo fi;
 		for ( int i = 3; i < 8; ++i ) // 何番目のフィールドかはデータベース見て直値で入れておく（本当は良くないけど…）
