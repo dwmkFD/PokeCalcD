@@ -19,6 +19,8 @@ constexpr unsigned int StatusKind = 6;
 // ポケモンのデータ
 class PokemonData {
 public:
+	int m_Level; // レベル
+
 	// HABCDS
 	int m_HitPoint;
 	int m_Attack;
