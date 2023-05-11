@@ -45,8 +45,8 @@ protected:
 	CDatabase m_database; // データベース
 	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
 
-	CEdit m_editCtrl_Name;	// 名前
-	CString m_editValName;	// 名前(値型)
+	CEdit m_editCtrl_Name[2];	// 名前
+	CString m_editValName[2];	// 名前(値型)
 	CComboBox m_cmbNature;	// 性格
 	CComboBox m_cmbAbility;	// 特性
 	CComboBox m_cmbItem;	// 持ち物
@@ -72,6 +72,7 @@ protected:
 	int m_radioField;	// フィールド
 
 	// 処理を統一するために、vectorかmapにしてindexを対応させた方がいいと思う
+	// あと、これ全部2セット要るんだよね。。
 	BOOL m_checkGravity;		// 重力
 	BOOL m_checkWonderRoom;		// ワンダールーム
 	BOOL m_checkPlasmaShower;	// プラズマシャワー
@@ -108,9 +109,12 @@ public:
 	afx_msg void OnBnClickedRadioBase( UINT id );
 	afx_msg void OnBnClickedStatusButton( UINT id );
 	afx_msg void OnCbnSelChangeComboBox( UINT id );
+	afx_msg void OnChangeEditBase( CEdit &editCtrl, CString &editVal, bool side );
 	afx_msg void OnChangeEdit1();
+	afx_msg void OnChangeEdit2();
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
-	afx_msg void OnCbnSelchangeCombo();
+	afx_msg void OnCbnSelchangeCombo1();
+	afx_msg void OnCbnSelchangeCombo2();
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 protected:
 	afx_msg LRESULT OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam );

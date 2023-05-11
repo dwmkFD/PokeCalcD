@@ -43,8 +43,16 @@ BOOL CComplDataDlg::PreTranslateMessage( MSG *pMsg )
 				{
 					// Returnキーが入力されたら、カーソル位置にあるポケモンの名前を親ウィンドウ側に送る
 					m_lboxComplName.GetText( m_lboxComplName.GetCurSel(), strName );
-					GetParent()->GetDlgItem( IDC_EDIT1 )->SetWindowText( strName );
-					GetParent()->SendMessage( PCD_STATUS_RECALCULATE );
+					if ( m_side )
+					{
+						GetParent()->GetDlgItem( IDC_EDIT1 )->SetWindowText( strName );
+						GetParent()->SendMessage( PCD_STATUS_RECALCULATE );
+					}
+					else
+					{
+						GetParent()->GetDlgItem( IDC_EDIT21 )->SetWindowText( strName );
+						GetParent()->SendMessage( PCD_STATUS_RECALCULATE );
+					}
 				}
 				break;
 
@@ -56,10 +64,20 @@ BOOL CComplDataDlg::PreTranslateMessage( MSG *pMsg )
 					if ( pMsg->wParam >= 'A' && pMsg->wParam <= 'Z' )
 					{
 						// アルファベットの入力なら、このダイアログを消してフォーカスを親ウィンドウに戻したい
-						GetParent()->GetDlgItem( IDC_EDIT1 )->GetWindowText( strName );
-						strName.AppendChar( _totlower( pMsg->wParam ) );
-						GetParent()->GetDlgItem( IDC_EDIT1 )->SetWindowText( strName );
-						clearListBox();
+						if ( m_side )
+						{
+							GetParent()->GetDlgItem( IDC_EDIT1 )->GetWindowText( strName );
+							strName.AppendChar( _totlower( pMsg->wParam ) );
+							GetParent()->GetDlgItem( IDC_EDIT1 )->SetWindowText( strName );
+							clearListBox();
+						}
+						else
+						{
+							GetParent()->GetDlgItem( IDC_EDIT21 )->GetWindowText( strName );
+							strName.AppendChar( _totlower( pMsg->wParam ) );
+							GetParent()->GetDlgItem( IDC_EDIT21 )->SetWindowText( strName );
+							clearListBox();
+						}
 					}
 				}
 				break;

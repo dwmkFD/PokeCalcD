@@ -60,7 +60,7 @@ END_MESSAGE_MAP()
 
 CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 	: CDialogEx( IDD_POKECALCD_DIALOG, pParent )
-	, m_editValName( _T( "" ) )
+	, m_editValName{ _T( "" ), _T( "" ) }
 
 	, m_editLv( _T( "50" ) )
 	, m_editStatus( PokemonData::StatusKind * 3 )   // いわゆる3値なので×3
@@ -93,8 +93,9 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange( pDX );
 
-	DDX_Control( pDX, IDC_EDIT1, m_editCtrl_Name );
-	DDX_Text( pDX, IDC_EDIT1, m_editValName );
+// ポケモン1側
+	DDX_Control( pDX, IDC_EDIT1, m_editCtrl_Name[0] );
+	DDX_Text( pDX, IDC_EDIT1, m_editValName[0] );
 
 	DDX_Text( pDX, IDC_EDIT2, m_editLv );
 	DDX_Text( pDX, IDC_EDIT3, m_editStatus[0] );
@@ -166,6 +167,10 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control( pDX, IDC_COMBO12, m_cmbAbility );
 	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
 	DDX_Control( pDX, IDC_COMBO14, m_cmbTeraType );
+
+// ポケモン2側
+	DDX_Control( pDX, IDC_EDIT21, m_editCtrl_Name[1] );
+	DDX_Text( pDX, IDC_EDIT21, m_editValName[1] );
 }
 
 BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
@@ -177,7 +182,9 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeCalcDDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeCalcDDlg::OnChangeEdit1 )
-	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeCalcDDlg::OnCbnSelchangeCombo )
+	ON_EN_CHANGE( IDC_EDIT21, &CPokeCalcDDlg::OnChangeEdit2 )
+	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeCalcDDlg::OnCbnSelchangeCombo1 )
+	ON_CBN_SELCHANGE( IDC_COMBO15, &CPokeCalcDDlg::OnCbnSelchangeCombo2 )
 	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeCalcDDlg::OnPcdStatusRecalculate )
 	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
@@ -511,7 +518,7 @@ void CPokeCalcDDlg::AllCalcStatus()
 	//    -> 1匹2匹程度なら、毎回データベースから拾ってきても良いかも
 	CRecordset rs( &m_database );
 	CString strSQL;
-	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName );
+	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName[0] ); // 2回のループにしないとダメ
 	auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 	short nFields = rs.GetODBCFieldCount();
 
@@ -747,28 +754,17 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 }
 
 
-
-void CPokeCalcDDlg::OnChangeEdit1()
+void CPokeCalcDDlg::OnChangeEditBase( CEdit &editCtrl, CString &editVal, bool side )
 {
-	// TODO: これが RICHEDIT コントロールの場合、このコントロールが
-	// この通知を送信するには、CDialogEx::OnInitDialog() 関数をオーバーライドし、
-	// CRichEditCtrl().SetEventMask() を関数し呼び出します。
-	// OR 状態の ENM_CHANGE フラグをマスクに入れて呼び出す必要があります。
-
-	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
-
-	// これもしかしてエディットボックスじゃなくてコンボボックスが良いのでは…？？
-	// -> ポップアップウィンドウでなんとかならないか…？
-
 	/* 入力された文字からデータベースを検索する */
 	UpdateData( TRUE ); // エディットボックスの入力中の文字を変数側に反映させる
 	CRecordset rs( &m_database );
 	try {
 		CString strSQL;
-		CString tmpTrans = m_trans.exec( m_editValName );
+		CString tmpTrans = m_trans.exec( editVal );
 		if ( tmpTrans.IsEmpty() == FALSE )
 		{
-			strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前 Like '%%%s%%'" ), m_trans.exec( m_editValName ) );
+			strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前 Like '%%%s%%'" ), m_trans.exec( editVal ) );
 		}
 		else
 		{
@@ -789,25 +785,24 @@ void CPokeCalcDDlg::OnChangeEdit1()
 		// ポケモンが見つかった場合
 		if ( nameList.size() > 0 )
 		{
+			m_complDlg.clearListBox(); // まずリストを空にする
 			m_complDlg.setListBox( nameList );
+			m_complDlg.selSideSet( side );
 
 			CRect rect;
-			m_editCtrl_Name.GetWindowRect( &rect );
+			editCtrl.GetWindowRect( &rect );
 			rect.top = rect.top += 24; // エディットボックスが隠れないようにする
 			rect.bottom = rect.top + ( nameList.size() + 1 ) * 24; // 24px × ポケモンの数くらいにしてみる
 			m_complDlg.MoveWindow( &rect );
 			m_complDlg.ShowWindow( SW_SHOW );
-//			m_complDlg.RunModalLoop(); // ループで止まっちゃうと次の文字が入力できなくて困るのでは…？
 		}
 
 		// エディットボックス（にするかコンボボックスにするかは要検討）に反映させて閉じる -> 補完ダイアログからの入力を受けて反映させたい
 		// 反映させる処理
 		UpdateData( FALSE );
 		rs.Close();
-
-		// ステータスを計算する -> ポケモンを選択されてからやらないとダメ
-//		AllCalcStatus();
-	} catch ( CDBException &e ) {
+	}
+	catch ( CDBException &e ) {
 		TCHAR msg[1024];
 		e.GetErrorMessage( msg, sizeof( msg ) );
 		MessageBox( msg, _T( "error" ), MB_ICONERROR );
@@ -815,13 +810,40 @@ void CPokeCalcDDlg::OnChangeEdit1()
 }
 
 
-void CPokeCalcDDlg::OnCbnSelchangeCombo()
+void CPokeCalcDDlg::OnChangeEdit1()
+{
+	// TODO: これが RICHEDIT コントロールの場合、このコントロールが
+	// この通知を送信するには、CDialogEx::OnInitDialog() 関数をオーバーライドし、
+	// CRichEditCtrl().SetEventMask() を関数し呼び出します。
+	// OR 状態の ENM_CHANGE フラグをマスクに入れて呼び出す必要があります。
+
+	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
+	OnChangeEditBase( m_editCtrl_Name[0], m_editValName[0], true );
+}
+
+void CPokeCalcDDlg::OnChangeEdit2()
+{
+	OnChangeEditBase( m_editCtrl_Name[1], m_editValName[1], false );
+}
+
+void CPokeCalcDDlg::OnCbnSelchangeCombo1()
 {
 	// TODO: ここにコントロール通知ハンドラー コードを追加します。
 	// 変更した性格に合わせてラジオボタンのON/OFFを変更する
 
 	// 性格を変更したらステータスを再計算する
-	if ( m_editValName.IsEmpty() == FALSE )
+	if ( m_editValName[0].IsEmpty() == FALSE )
+	{
+		AllCalcStatus();
+	}
+}
+void CPokeCalcDDlg::OnCbnSelchangeCombo2()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	// 変更した性格に合わせてラジオボタンのON/OFFを変更する
+
+	// 性格を変更したらステータスを再計算する
+	if ( m_editValName[1].IsEmpty() == FALSE )
 	{
 		AllCalcStatus();
 	}
