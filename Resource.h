@@ -134,6 +134,16 @@
 #define IDC_COMBO13                     1122
 #define IDC_COMBO14                     1123
 #define IDC_LIST1                       1124
+#define IDC_RADIO13                     1125
+#define IDC_RADIO14                     1126
+#define IDC_RADIO15                     1127
+#define IDC_RADIO16                     1128
+#define IDC_RADIO17                     1129
+#define IDC_RADIO18                     1130
+#define IDC_RADIO19                     1131
+#define IDC_RADIO20                     1132
+#define IDC_RADIO21                     1133
+#define IDC_RADIO22                     1134
 
 // Next default values for new objects
 // 

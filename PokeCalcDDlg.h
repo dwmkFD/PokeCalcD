@@ -50,19 +50,21 @@ protected:
 	CComboBox m_cmbNature;	// 性格
 	CComboBox m_cmbAbility;	// 特性
 	CComboBox m_cmbItem;	// 持ち物
+	std::vector<CComboBox> m_cmbRank; // ランク補正
 
 	// 実数値
 	CString m_editLv;		// Lv
 	std::vector<CString> m_editStatus; // HABCDSはこの順で、実数値、個体値、努力値の順に格納する
-	std::vector<CScrollBar> m_scrollStatus;
+	std::vector<CScrollBar> m_scrollStatus; // エディットボックスの隣にくっついてるスクロールバー
 
 	CComboBox m_cmbTeraType; // テラスタイプ
 private:
 	/* 初期化 */
-	void initNature();  // 性格コンボボックスの初期化
-	void initAbility(); // 特性コンボボックスの初期化
-	void initItem();    // 持ち物コンボボックスの初期化
-	void initTeraType(); // テラスタイプコンボボックスの初期化
+	void initNature();      // 性格コンボボックスの初期化
+	void initAbility();     // 特性コンボボックスの初期化
+	void initItem();        // 持ち物コンボボックスの初期化
+	void initTeraType();    // テラスタイプコンボボックスの初期化
+	void initRankCorrect(); // ランク補正コンボボックスの初期化
 
 protected:
 	int m_radioBattle;	// シングル or ダブル
@@ -98,11 +100,14 @@ protected:
 
 
 private:
+	bool addEffortVal( UINT id, bool isGain ); // 努力値を増減させる
+	void statusCalcBase( UINT id, bool isGain ); // ステータス計算ベース関数
 	void AllEditCheck(); // レベルや個体値、努力値が指定の範囲に収まっているか？をチェックし、溢れていたら丸める
 	void AllCalcStatus(); // 個体値や努力値を修正された場合にステータスを再計算する
 public:
 	afx_msg void OnBnClickedRadioBase( UINT id );
 	afx_msg void OnBnClickedStatusButton( UINT id );
+	afx_msg void OnCbnSelChangeComboBox( UINT id );
 	afx_msg void OnChangeEdit1();
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
 	afx_msg void OnCbnSelchangeCombo();

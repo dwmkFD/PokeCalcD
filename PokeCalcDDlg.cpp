@@ -83,6 +83,8 @@ CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 	, m_checkKiaidame( FALSE )
 	, m_checkJuden( FALSE )
 	, m_checkHaganenoseisin( FALSE )
+
+	, m_cmbRank( PokemonData::StatusKind ) // HPはランク補正かけられないから要らないけど、領域だけ確保する
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -156,6 +158,11 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check( pDX, IDC_CHECK12, m_checkHaganenoseisin );
 
 	DDX_Control( pDX, IDC_COMBO1, m_cmbNature );
+	DDX_Control( pDX, IDC_COMBO2, m_cmbRank[1] );
+	DDX_Control( pDX, IDC_COMBO3, m_cmbRank[2] );
+	DDX_Control( pDX, IDC_COMBO4, m_cmbRank[3] );
+	DDX_Control( pDX, IDC_COMBO5, m_cmbRank[4] );
+	DDX_Control( pDX, IDC_COMBO6, m_cmbRank[5] );
 	DDX_Control( pDX, IDC_COMBO12, m_cmbAbility );
 	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
 	DDX_Control( pDX, IDC_COMBO14, m_cmbTeraType );
@@ -166,6 +173,7 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO12, &CPokeCalcDDlg::OnBnClickedRadioBase )
+	ON_CONTROL_RANGE( CBN_SELCHANGE, IDC_COMBO2, IDC_COMBO6, &CPokeCalcDDlg::OnCbnSelChangeComboBox )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeCalcDDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeCalcDDlg::OnChangeEdit1 )
@@ -213,6 +221,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	initAbility();	// 特性コンボボックスを初期化
 	initItem();		// 持ち物コンボボックスを初期化
 	initTeraType(); // テラスタイプコンボボックスを初期化
+	initRankCorrect(); // ランク補正コンボボックスを初期化
 
 	// データベース接続
 	CString strConnection = _T( "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=.\\PokeData.accdb;UID=;Pwd=" );
@@ -385,6 +394,7 @@ void CPokeCalcDDlg::initItem()
 	m_cmbAbility.SetCurSel( 0 );
 }
 
+// テラスタイプコンボボックスの初期化
 void CPokeCalcDDlg::initTeraType()
 {
 	m_cmbTeraType.AddString( _T( "テラスタイプ" ) );
@@ -408,6 +418,69 @@ void CPokeCalcDDlg::initTeraType()
 	m_cmbTeraType.AddString( _T( "フェアリー" ) );
 	m_cmbTeraType.SetCurSel( 0 );
 }
+
+// ランク補正コンボボックスの初期化
+void CPokeCalcDDlg::initRankCorrect()
+{
+	CString strInput;
+	for ( int i = 6; i > 0; --i )
+	{
+		strInput.Format( _T( "+%d" ), i );
+		m_cmbRank[PokemonData::Attack_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Block_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Contact_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Diffence_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Speed_Index].AddString( strInput );
+	}
+	m_cmbRank[PokemonData::Attack_Index].AddString( _T( "-" ) );
+	m_cmbRank[PokemonData::Block_Index].AddString( _T( "-" ) );
+	m_cmbRank[PokemonData::Contact_Index].AddString( _T( "-" ) );
+	m_cmbRank[PokemonData::Diffence_Index].AddString( _T( "-" ) );
+	m_cmbRank[PokemonData::Speed_Index].AddString( _T( "-" ) );
+	for ( int i = -1; i >= -6; --i )
+	{
+		strInput.Format( _T( "%d" ), i );
+		m_cmbRank[PokemonData::Attack_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Block_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Contact_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Diffence_Index].AddString( strInput );
+		m_cmbRank[PokemonData::Speed_Index].AddString( strInput );
+	}
+
+	m_cmbRank[PokemonData::Attack_Index].SetCurSel( 6 );
+	m_cmbRank[PokemonData::Block_Index].SetCurSel( 6 );
+	m_cmbRank[PokemonData::Contact_Index].SetCurSel( 6 );
+	m_cmbRank[PokemonData::Diffence_Index].SetCurSel( 6 );
+	m_cmbRank[PokemonData::Speed_Index].SetCurSel( 6 );
+}
+
+// 努力値を増減させる
+bool CPokeCalcDDlg::addEffortVal( UINT id, bool isGain = true )
+{
+	// 引数が true なら増加、false なら減少させる
+	int realval = _tcstol( m_editStatus[id], nullptr, 10 );
+	int efftval = _tcstol( m_editStatus[id + PokemonData::StatusKind * 2], nullptr, 10 );
+
+	efftval += ( isGain ? 1 : -1 ) * 4;
+	m_editStatus[id + PokemonData::StatusKind * 2].Format( _T( "%d" ), efftval );
+	AllEditCheck();  // 範囲チェック
+	AllCalcStatus(); // ステータス再計算
+
+	int realval2 = _tcstol( m_editStatus[id], nullptr, 10 );
+	if ( realval2 == realval ) // 努力値を4だけ増減させてステータスが変わらなかった場合
+	{
+		// さらに4だけ増減させる
+		efftval += ( isGain ? 1 : -1 ) * 4;
+		m_editStatus[id + PokemonData::StatusKind * 2].Format( _T( "%d" ), efftval );
+		AllEditCheck();
+		AllCalcStatus();
+	}
+
+	realval2 = _tcstol( m_editStatus[id], nullptr, 10 );
+
+	return ( realval != realval2 ); // ステータスを増減させることができたら true を返す
+}
+
 
 // 値チェックと補正
 void CPokeCalcDDlg::AllEditCheck()
@@ -503,46 +576,85 @@ void CPokeCalcDDlg::OnBnClickedRadioBase( UINT id )
 	UpdateData( TRUE );
 }
 
+// コンボボックス制御のベース関数
+void CPokeCalcDDlg::OnCbnSelChangeComboBox( UINT id )
+{
+	UpdateData( TRUE );
+}
+
+// ステータス計算のベース関数
+void CPokeCalcDDlg::statusCalcBase( UINT id, bool isGain )
+{
+	if ( isGain )
+	{
+		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
+		if ( id >= PokemonData::StatusKind * 2 )
+		{
+			// 努力値を操作された時
+			addEffortVal( id - PokemonData::StatusKind * 2 );
+		}
+		else if ( id >= PokemonData::StatusKind )
+		{
+			// 個体値は1ずつ増減させる
+			++val;
+			m_editStatus[id].Format( _T( "%d" ), val );
+			AllEditCheck();
+		}
+		else
+		{
+			// 実数値を操作された時は、まず努力値を増減、それができない時は個体値を増減させる
+			if ( addEffortVal( id ) == false )
+			{
+				++val;
+				m_editStatus[id].Format( _T( "%d" ), val );
+				AllEditCheck();
+			}
+		}
+	}
+	else
+	{
+		// 下ボタンが押された時
+		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
+		if ( id >= PokemonData::StatusKind * 2 )
+		{
+			// 努力値を操作された時
+			addEffortVal( id - PokemonData::StatusKind * 2, false );
+		}
+		else if ( id >= PokemonData::StatusKind )
+		{
+			// 個体値は1ずつ増減させる
+			--val;
+			m_editStatus[id].Format( _T( "%d" ), val );
+			AllEditCheck();
+		}
+		else
+		{
+			// 実数値を操作された時は、まず努力値を増減、それができない時は個体値を増減させる
+			if ( addEffortVal( id, false ) == false )
+			{
+				--val;
+				m_editStatus[id].Format( _T( "%d" ), val );
+				AllEditCheck();
+			}
+		}
+	}
+}
+
 void CPokeCalcDDlg::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 	UpdateData( TRUE );
 
+	UINT_PTR id = pScrollBar->GetDlgCtrlID() - IDC_SCROLLBAR1;
 	if ( nSBCode == SB_LINEUP )
 	{
 		// 上ボタンが押された時
-		UINT_PTR id = pScrollBar->GetDlgCtrlID() - IDC_SCROLLBAR1;
-		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
-		if ( id >= PokemonData::StatusKind * 2 )
-		{
-			// 努力値は4ずつ増減させる
-			val += 4;
-		}
-		else
-		{
-			// 実数値と個体値は1ずつ増減させる
-			++val;
-
-			// 実数値を操作された時は、まず努力値を増減、それができない時は個体値を増減、それもダメならエラーとしたい
-		}
-		m_editStatus[id].Format( _T( "%d" ), val );
+		statusCalcBase( id, true );
 	}
 	else if ( nSBCode == SB_LINEDOWN )
 	{
 		// 下ボタンが押された時
-		UINT_PTR id = pScrollBar->GetDlgCtrlID() - IDC_SCROLLBAR1;
-		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
-		if ( id >= PokemonData::StatusKind * 2 )
-		{
-			// 努力値は4ずつ増減させる
-			val -= 4;
-		}
-		else
-		{
-			// 実数値と個体値は1ずつ増減させる
-			--val;
-		}
-		m_editStatus[id].Format( _T( "%d" ), val );
+		statusCalcBase( id, false );
 	}
 	else
 	{
@@ -568,29 +680,17 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	// id(つまり押されたボタン)によって振り分ける
 	int inputId = id - IDC_BUTTON1;
 
-	auto update = [&]( int idx, int input ) {
-		int val = _tcstol( m_editStatus[idx], nullptr, 10 );
-		val += input;
-		m_editStatus[idx].Format( _T( "%d" ), val );
-	};
-
 	if ( inputId < 12 )	// 最初の12個はステータスの実数値を増減する(けど、実質努力値ボタンと一緒の扱いになると思う)
 	{
 		if ( inputId % 2 )
 		{
 			// 奇数番目は + ボタン
-			update( PokemonData::StatusKind * 2 + inputId / 2, 1 ); // 努力値を修正 -> Lvによって1増えるのに必要な努力値が違うので注意！（あとで直す！！！）
-			UpdateData( FALSE );
-
-			AllCalcStatus(); // ステータスを再計算
+			statusCalcBase( id / 2, true );
 		}
 		else
 		{
 			// 偶数番目は - ボタン
-			update( PokemonData::StatusKind * 2 + inputId / 2, -1 );
-			UpdateData( FALSE );
-
-			AllCalcStatus(); // ステータスを再計算
+			statusCalcBase( id / 2, false );
 		}
 	}
 	else if ( inputId < 18 ) // 次の6個は努力値の数値を0/252で切り替える
@@ -606,10 +706,29 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	else if ( inputId < 28 ) // 次の10個は性格補正
 	{
 		// + あるいは - が押された時、最も低い / 高いステータスが - / + になるように性格を変えてあげたい
+		// getMaxMinStatus(); // 的なやつを実装したい
 	}
 	else if ( inputId < 38 ) // 次の10個はランク補正
 	{
-		// ステータスそのものは再計算不要だから、ここでやることは特にない…？
+		int cur = static_cast<CComboBox *>( GetDlgItem( IDC_COMBO2 + ( inputId - 28 ) / 2 ) )->GetCurSel();
+		if ( inputId % 2 )
+		{
+			// 奇数番目は + ボタン
+			--cur;
+			if ( cur >= 0 )
+			{
+				static_cast<CComboBox *>( GetDlgItem( IDC_COMBO2 + ( inputId - 28 ) / 2 ) )->SetCurSel( cur );
+			}
+		}
+		else
+		{
+			// 偶数番目は - ボタン
+			++cur;
+			if ( cur < 13 )
+			{
+				static_cast<CComboBox *>( GetDlgItem( IDC_COMBO2 + ( inputId - 28 ) / 2 ) )->SetCurSel( cur );
+			}
+		}
 	}
 	else if ( inputId < 48 ) // 次の10個は特性補正
 	{
@@ -699,6 +818,8 @@ void CPokeCalcDDlg::OnChangeEdit1()
 void CPokeCalcDDlg::OnCbnSelchangeCombo()
 {
 	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	// 変更した性格に合わせてラジオボタンのON/OFFを変更する
+
 	// 性格を変更したらステータスを再計算する
 	if ( m_editValName.IsEmpty() == FALSE )
 	{
