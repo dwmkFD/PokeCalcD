@@ -25,7 +25,11 @@ protected:
 
 public:
 	void setListBox( std::vector<CString> nameList ); // リストボックスに補完したポケモン名を設定する
+	void clearListBox(); // リストボックスをクリアする
+
 	afx_msg void OnKillFocus( CWnd *pNewWnd );
+	virtual BOOL PreTranslateMessage( MSG *pMsg );
+	afx_msg void OnShowWindow( BOOL bShow, UINT nStatus );
 
 protected:
 

@@ -8,13 +8,6 @@
 
 /* ポケモンのデータ定義 */
 
-constexpr unsigned int HP_Index = 0;
-constexpr unsigned int Attack_Index = 1;
-constexpr unsigned int Block_Index = 2;
-constexpr unsigned int Contact_Index = 3;
-constexpr unsigned int Diffence_Index = 4;
-constexpr unsigned int Speed_Index = 5;
-constexpr unsigned int StatusKind = 6;
 
 // ポケモンのデータ
 class PokemonData {
@@ -48,5 +41,13 @@ public:
 	std::vector<CString> m_ability;	// 特性
 
 	std::vector<CString> m_move; // 覚える技
+
+	static constexpr unsigned int HP_Index = 0;
+	static constexpr unsigned int Attack_Index = 1;
+	static constexpr unsigned int Block_Index = 2;
+	static constexpr unsigned int Contact_Index = 3;
+	static constexpr unsigned int Diffence_Index = 4;
+	static constexpr unsigned int Speed_Index = 5;
+	static constexpr unsigned int StatusKind = 6;
 };
 

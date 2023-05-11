@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <algorithm>
 
 #include "pokemove.hpp"
 #include "pokemon.hpp"
@@ -44,6 +45,8 @@ public:
 		CRecordset rs( db );
 
 		try {
+			// コンストラクタで技データベースを全部読み出すせいで起動が遅い…ｗ
+			// ポケモンを入力されてから、必要な技だけ読めば良いんだよね、ホントは…。
 			CString strSQL;
 			strSQL.Format( _T( "SELECT * FROM move" ) );
 			auto res = rs.Open( CRecordset::forwardOnly, strSQL );
@@ -82,13 +85,19 @@ public:
 		int power = m_moveDB[name].m_power;
 	}
 
-	std::vector<std::pair<CString, std::vector<int>>> calc( PokemonData atk, PokemonData def, CBattleSettings option ) {
+	std::map<CString, std::vector<int>> calc( PokemonData atk, PokemonData def, CBattleSettings option ) {
 		// 攻撃側が覚える全ての攻撃技でダメージ計算する
 		// 戻り値は、「技名：ダメージパターン(乱数と急所により全32パターン)」を覚える技全てで計算した結果
 		// ただし、変化技は無視する
-		std::vector<std::pair<CString, std::vector<int>>> result;
+		std::map<CString, std::vector<int>> result;
 		for ( auto &&atkmove : atk.m_move )
 		{
+			if ( result[atkmove].size() > 0 )
+			{
+				// この技のダメージは計算済みなのでスキップ
+				continue;
+			}
+
 			// ダメージ計算式↓
 			//  (((レベル×2/5+2)×威力×A/D)/50+2)×範囲補正×おやこあい補正×天気補正×急所補正×乱数補正×タイプ一致補正×相性補正×やけど補正×M×Mprotect
 			// A = 攻撃側の攻撃(物理) or 特攻(特殊)
@@ -114,9 +123,9 @@ public:
 			int Mhalf = 4096, Mfilter = 4096, MTwice = 4096;
 
 			/* STEP1. A/Dを決定 */ // --> 要確認！！！　ランク補正ってここのA/Dを直接いじる？
-			if ( m_moveDB[atkmove].m_category == 0 )
+			if ( ( m_moveDB[atkmove].m_category & 0x3 ) == 0 )
 			{
-				continue; // 変化技は処理しない
+				continue; // 変化技、あるいはデータベースに登録されていない技は処理しない
 			}
 			if ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
 			{
@@ -138,13 +147,13 @@ public:
 			/* STEP2. 最初の()内を計算 */
 			/* STEP2-1. 威力を決定 */
 			int power = m_moveDB[atkmove].m_power;
+			/* 以下、サイコフィールドでワイドフォースとか、ジャイロボールとか、そういうやつも計算する */
+			// ↓これも関数に入れた方が良い？？
 			if ( option.m_item & CBattleSettings::ITEM_LIFEORB )
 			{
 				// タイプ強化アイテムなら威力4915/4096倍
 				power *= 4915; power /= 4096;
 			}
-
-			/* 以下、サイコフィールドでワイドフォースとか、ジャイロボールとか、そういうやつも計算する */
 
 			/* STEP2-2. A/Dにランク補正を入れるのはここ？ */
 			// -> 急所に当たる場合は不利な効果を無視するので、ちょっとめんどいことになるかも…
@@ -164,18 +173,33 @@ public:
 			{
 				// 晴れの時、炎技は1.5倍、水技は0.5倍
 				if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
-					;
+				{
+					damage *= ( 4096 + 2048 );
+					damage += 2047;
+					damage /= 4096;
+				}
 				else if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
-					;
-			}
-			else if ( option.m_weather == 2 )
+				{
+					damage *= 2048;
+					damage += 2047;
+					damage /= 4096;
+				}
+			} else if ( option.m_weather == 2 )
 			{
 				// 雨の時、炎技は0.5倍、水技は1.5倍
 				// 晴れの時、炎技は1.5倍、水技は0.5倍
 				if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
-					;
+				{
+					damage *= ( 4096 + 2048 );
+					damage += 2047;
+					damage /= 4096;
+				}
 				else if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
-					;
+				{
+					damage *= 2048;
+					damage += 2047;
+					damage /= 4096;
+				}
 			}
 
 			/* STEP6. 急所補正 */
@@ -228,20 +252,21 @@ public:
 			}
 
 			/* STEP11. Mを計算する */ // -> Mを計算する別関数を作った方が良い気がする。以下Mhalf等も同様。
+			// 今更だけど、型破りを考慮してない…
+			// -> 型破りフラグがONなら、残りの特性系ビットを全部OFFにすれば良いような気もする
 			/* STEP11-1. 壁補正 */
 			if ( m_moveDB[atkmove].m_category & option.m_barrier )
 			{
 				// 分類と壁の有無が一致
 				// →テラバーストとかフォトンゲイザーが困るか…
-				//   bitには空きがあるし、専用bit入れるか
-				for ( int i = 0; i < 16; ++i ) // 急所に当たったら壁は無視
+				//   bitには空きがあるし、専用bit入れるか。テラバースト物理、テラバースト特殊(壁)、みたいな
+				for ( int i = 0; i < 16; ++i ) // 急所に当たったら壁は無視されるので、前半16パターンだけ補正する
 				{
 					if ( option.m_range )
 					{
 						// ダブル補正がある時は2732/4096倍
 						tmpresult[i] *= 2732;
-					}
-					else
+					} else
 					{
 						// シングルなら0.5倍
 						tmpresult[i] *= 2048;
@@ -296,7 +321,13 @@ public:
 			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
 				&& ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK ) )
 			{
-				// 氷の鱗粉で特殊技を受ける時は威力半減
+				// 氷の鱗粉で特殊技を受ける時はダメージ半減
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 2048;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-6-2. ファントムガード、マルチスケイル補正 */
@@ -304,21 +335,41 @@ public:
 			{
 				// ファントムガード、マルチスケイルが発動する時はダメージ半減
 				// -> ツールとしてはチェックボックスのON/OFFで切り替えるのでHP判定はしない
-				// ファントムガードは、シャドーレイやメテオドライブの特性貫通を無視して半減するので、
+				// ファントムガードは、シャドーレイやメテオドライブの特性貫通効果や型破りを無視して半減するので、
 				// 別々に計算した方が良いかも
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 2048;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-6-3. パンクロック補正 */
-			if ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+				&& ( m_moveDB[atkmove].m_direct ) ) // 音属性入れないとダメ
 			{
 				// 音の技を受ける時はダメージ半減
-				// 逆に音技を使う時は威力上昇？
+				// 逆に音技を使う時は[威力]上昇？ -> 威力計算の時にやる？
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 2048;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-6-4. もふもふ(接触技)補正 */
-			if ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+				&& ( m_moveDB[atkmove].m_direct ) )
 			{
 				// 接触技を受ける時はダメージ半減
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 2048;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-7. Mfilter補正 */
@@ -328,12 +379,24 @@ public:
 			{
 				// ハードロック/フィルターが発動する時はダメージ0.75倍
 				// プリズムアーマーは、シャドーレイやメテオドライブの特性貫通を無視して軽減するので、別々に計算
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= ( 2048 + 1024 );
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 			/* STEP11-7-2. プリズムアーマー補正 */
 			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// プリズムアーマーが発動する時はダメージ0.75倍
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= ( 2048 + 1024 );
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-8. フレンドガード補正 */
@@ -341,42 +404,92 @@ public:
 			{
 				// フレンドガードが発動する時はダメージ0.75倍
 				// -> ツールとしてはチェックボックスのON/OFFで切り替える
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= ( 2048 + 1024 );
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-9. 達人の帯補正 */
 			if ( ( option.m_item & CBattleSettings::ABILITY_SNIPER )
 				&& ( typecomp_res > 1.0 ) )
 			{
-				// 達人の帯が発動する時はダメージ1.2倍
+				// 達人の帯が発動する時はダメージ1.2倍 -> 正確にはいくつ？4915？4916？
 			}
 
 			/* STEP11-10. メトロノーム補正 */
 			if ( option.m_item & CBattleSettings::ITEM_METRONOME )
 			{
 				// メトロノームで同じ技をN回使ったらダメージ上昇
+				std::vector<int> gain = { 4096, 4096, 4096, 4096, 4096, 8192 };
+				for ( int i = 0; i < 6; ++i )
+				{
+					if ( option.m_item & ( 1 << i ) )
+					{
+						// iビット目がONならgain[i]倍になる
+						tmpresult[i] *= gain[i];
+						tmpresult[i] += 2048;
+						tmpresult[i] /= 4096;
+						break;
+					}
+				}
 			}
 
 			/* STEP11-11. 命の珠補正 */
 			if ( option.m_item & CBattleSettings::ITEM_LIFEORB )
 			{
-				// 命の珠ならダメージ1.3倍
+				// 命の珠ならダメージ1.3倍 -> 正確には5324/4096倍？
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 5324;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-12. 半減実補正 */
 			if ( ( option.m_item & CBattleSettings::ITEM_LIFEORB )
 				&& ( typecomp_res > 1.0 ) )
 			{
-				// 弱点半減の実ならダメージ0.5倍
+				// 弱点半減の実ならダメージ0.5倍 -> これは正確に2048/4096？
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 2048;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP11-13. Mtwice補正 */
 			if ( option.m_twice )
 			{
 				// 特定条件下でダメージ2倍の技を使用した
+				for ( int i = 0; i < 32; ++i )
+				{
+					tmpresult[i] *= 8192;
+					tmpresult[i] += 2048;
+					tmpresult[i] /= 4096;
+				}
 			}
 
 			/* STEP12. Mprotect補正は第九世代には存在しない */
+
+			/* LAST STEP. 計算結果を結果配列に突っ込む */
+			// 同じ技を重複してデータベースに登録してる問題をこっち側で解決する
+			result[atkmove] = tmpresult;
 		}
+
+		// 与えるダメージが大きい技から順番に並べたいね…
+		// たぶん、各要素の先頭の値でソートしちゃって良いと思うけど、std::mapのままだとソートできないか…
+		/*
+		sort( result.begin(), result.end(),
+			[]( std::pair<CString, std::vector<int>> x, std::pair<CString, std::vector<int>> y ) {
+			return ( x.second[0] > y.second[0] );
+		} );
+		*/
+		return ( result );
 	}
 
 private:

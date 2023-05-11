@@ -17,6 +17,10 @@
 #include "damage.hpp"
 
 
+// メッセージID定義(自動ではやってくれないみたい…)
+#define PCD_STATUS_RECALCULATE ( WM_USER + 1 )
+
+
 // CPokeCalcDDlg ダイアログ
 class CPokeCalcDDlg : public CDialogEx
 {
@@ -98,7 +102,11 @@ private:
 	void AllCalcStatus(); // 個体値や努力値を修正された場合にステータスを再計算する
 public:
 	afx_msg void OnBnClickedRadioBase( UINT id );
-	afx_msg void OnNMThemeChangedScrollbar( NMHDR *pNMHDR, LRESULT *pResult );
 	afx_msg void OnBnClickedStatusButton( UINT id );
 	afx_msg void OnChangeEdit1();
+	virtual BOOL PreTranslateMessage( MSG *pMsg );
+	afx_msg void OnCbnSelchangeCombo();
+	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
+protected:
+	afx_msg LRESULT OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam );
 };

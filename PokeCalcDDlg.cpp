@@ -63,8 +63,8 @@ CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 	, m_editValName( _T( "" ) )
 
 	, m_editLv( _T( "50" ) )
-	, m_editStatus( StatusKind * 3 )   // いわゆる3値なので×3
-	, m_scrollStatus( StatusKind * 3 )
+	, m_editStatus( PokemonData::StatusKind * 3 )   // いわゆる3値なので×3
+	, m_scrollStatus( PokemonData::StatusKind * 3 )
 
 	, m_radioBattle( 0 )
 	, m_radioWeather( 0 )
@@ -166,10 +166,12 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO12, &CPokeCalcDDlg::OnBnClickedRadioBase )
-	ON_NOTIFY( NM_THEMECHANGED, IDC_SCROLLBAR1, &CPokeCalcDDlg::OnNMThemeChangedScrollbar )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeCalcDDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeCalcDDlg::OnChangeEdit1 )
+	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeCalcDDlg::OnCbnSelchangeCombo )
+	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeCalcDDlg::OnPcdStatusRecalculate )
+	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 
@@ -220,10 +222,10 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	m_damage.reset( new CCalcDamage( &m_database ) );
 
 	// 個体値と努力値の初期値を入れておく
-	for ( int i = 0; i < StatusKind; ++i )
+	for ( int i = 0; i < PokemonData::StatusKind; ++i )
 	{
-		m_editStatus[i + StatusKind] = _T( "31" );
-		m_editStatus[i + StatusKind * 2] = _T( "0" );
+		m_editStatus[i + PokemonData::StatusKind] = _T( "31" );
+		m_editStatus[i + PokemonData::StatusKind * 2] = _T( "0" );
 	}
 	UpdateData( FALSE ); // 画面側に反映させる
 
@@ -277,6 +279,29 @@ void CPokeCalcDDlg::OnPaint()
 HCURSOR CPokeCalcDDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+
+BOOL CPokeCalcDDlg::PreTranslateMessage( MSG *pMsg )
+{
+	// TODO: ここに特定なコードを追加するか、もしくは基底クラスを呼び出してください。
+	switch ( pMsg->message )
+	{
+		case WM_KEYDOWN:
+		{
+			switch ( pMsg->wParam )
+			{
+				case VK_RETURN:
+				case VK_ESCAPE:
+					return ( FALSE );
+			}
+		}
+		break;
+
+		default: break;
+	}
+
+	return CDialogEx::PreTranslateMessage( pMsg );
 }
 
 
@@ -392,17 +417,17 @@ void CPokeCalcDDlg::AllEditCheck()
 	lv = std::clamp( lv, 1, 100 );
 	m_editLv.Format( _T( "%d" ), lv );
 
-	for ( int i = 0; i < StatusKind; ++i )
+	for ( int i = 0; i < PokemonData::StatusKind; ++i )
 	{
 		// 個体値チェック 0 ～ 31
-		int ind = _tcstol( m_editStatus[StatusKind + i], nullptr, 10 );
+		int ind = _tcstol( m_editStatus[PokemonData::StatusKind + i], nullptr, 10 );
 		ind = std::clamp( ind, 0, 31 );
-		m_editStatus[StatusKind + i].Format( _T( "%d" ), ind );
+		m_editStatus[PokemonData::StatusKind + i].Format( _T( "%d" ), ind );
 
 		// 努力値チェック 0 ～ 252
-		int eff = _tcstol( m_editStatus[StatusKind * 2 + i], nullptr, 10 );
+		int eff = _tcstol( m_editStatus[PokemonData::StatusKind * 2 + i], nullptr, 10 );
 		eff = std::clamp( eff, 0, 252 );
-		m_editStatus[StatusKind * 2 + i].Format( _T( "%d" ), eff );
+		m_editStatus[PokemonData::StatusKind * 2 + i].Format( _T( "%d" ), eff );
 	}
 }
 
@@ -410,6 +435,66 @@ void CPokeCalcDDlg::AllCalcStatus()
 {
 	// 種族値も必要だがどうやって持ってくる…？
 	// -> m_editStatusの4つ目に入れておく？
+	//    -> 1匹2匹程度なら、毎回データベースから拾ってきても良いかも
+	CRecordset rs( &m_database );
+	CString strSQL;
+	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName );
+	auto res = rs.Open( CRecordset::forwardOnly, strSQL );
+	short nFields = rs.GetODBCFieldCount();
+
+	// ステータス計算式：
+	// HPの場合：(種族値×2+個体値+努力値÷4)×レベル÷100+レベル+10
+	// それ以外：{(種族値×2+個体値+努力値÷4)×レベル÷100+5}×せいかく補正
+
+	try {
+		for ( int i = 4; i < 10; ++i ) // 何番目のフィールドかはデータベース見て直値で入れておく（本当は良くないけど…）
+		{
+			CString strValue;
+			rs.GetFieldValue( i, strValue );
+			m_editStatus[i - 4] = strValue; // 実数値には、まず種族値をそのまま入力する
+		}
+
+		int lv = _tcstol( m_editLv, nullptr, 10 );
+		std::vector<int> status = {
+			// 種族値
+			_tcstol( m_editStatus[PokemonData::HP_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[PokemonData::Attack_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[PokemonData::Block_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[PokemonData::Contact_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[PokemonData::Diffence_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[PokemonData::Speed_Index], nullptr, 10 ),
+			// 個体値
+			_tcstol( m_editStatus[6 + PokemonData::HP_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[6 + PokemonData::Attack_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[6 + PokemonData::Block_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[6 + PokemonData::Contact_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[6 + PokemonData::Diffence_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[6 + PokemonData::Speed_Index], nullptr, 10 ),
+			// 努力値
+			_tcstol( m_editStatus[12 + PokemonData::HP_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[12 + PokemonData::Attack_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[12 + PokemonData::Block_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[12 + PokemonData::Contact_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[12 + PokemonData::Diffence_Index], nullptr, 10 ),
+			_tcstol( m_editStatus[12 + PokemonData::Speed_Index], nullptr, 10 ),
+		};
+
+		// HPを計算する
+		int val = ( status[PokemonData::HP_Index] * 2 + status[6 + PokemonData::HP_Index] + status[12 + PokemonData::HP_Index] / 4 ) * lv / 100 + lv + 10;
+		m_editStatus[PokemonData::HP_Index].Format( _T( "%d" ), val );
+
+		// それ以外のステータスを計算する
+		for ( int i = 1; i < PokemonData::StatusKind; ++i )
+		{
+			val = ( status[PokemonData::HP_Index + i] * 2 + status[6 + PokemonData::HP_Index + i] + status[12 + PokemonData::HP_Index + i] / 4 ) * lv / 100 + 5;
+			m_editStatus[PokemonData::HP_Index + i].Format( _T( "%d" ), val );
+
+			// 性格補正する
+			// ちょっと実装保留で…
+		}
+
+		UpdateData( FALSE );
+	} catch ( ... ) {}
 }
 
 // ラジオボタン制御のベース関数
@@ -418,28 +503,45 @@ void CPokeCalcDDlg::OnBnClickedRadioBase( UINT id )
 	UpdateData( TRUE );
 }
 
-void CPokeCalcDDlg::OnNMThemeChangedScrollbar( NMHDR *pNMHDR, LRESULT *pResult )
+void CPokeCalcDDlg::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 {
-	// この機能は Windows XP それ以降のバージョンを必要とします。
-	// シンボル _WIN32_WINNT は >= 0x0501にならなければなりません。
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 	UpdateData( TRUE );
 
-	*pResult = 0;
-	if ( pNMHDR->code == SB_LINEUP )
+	if ( nSBCode == SB_LINEUP )
 	{
 		// 上ボタンが押された時
-		UINT_PTR id = pNMHDR->idFrom - IDC_SCROLLBAR1;
+		UINT_PTR id = pScrollBar->GetDlgCtrlID() - IDC_SCROLLBAR1;
 		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
-		++val;
+		if ( id >= PokemonData::StatusKind * 2 )
+		{
+			// 努力値は4ずつ増減させる
+			val += 4;
+		}
+		else
+		{
+			// 実数値と個体値は1ずつ増減させる
+			++val;
+
+			// 実数値を操作された時は、まず努力値を増減、それができない時は個体値を増減、それもダメならエラーとしたい
+		}
 		m_editStatus[id].Format( _T( "%d" ), val );
 	}
-	else if ( pNMHDR->code == SB_LINEDOWN )
+	else if ( nSBCode == SB_LINEDOWN )
 	{
 		// 下ボタンが押された時
-		UINT_PTR id = pNMHDR->idFrom - IDC_SCROLLBAR1;
+		UINT_PTR id = pScrollBar->GetDlgCtrlID() - IDC_SCROLLBAR1;
 		unsigned int val = _tcstol( m_editStatus[id], nullptr, 10 );
-		--val;
+		if ( id >= PokemonData::StatusKind * 2 )
+		{
+			// 努力値は4ずつ増減させる
+			val -= 4;
+		}
+		else
+		{
+			// 実数値と個体値は1ずつ増減させる
+			--val;
+		}
 		m_editStatus[id].Format( _T( "%d" ), val );
 	}
 	else
@@ -454,6 +556,8 @@ void CPokeCalcDDlg::OnNMThemeChangedScrollbar( NMHDR *pNMHDR, LRESULT *pResult )
 	AllCalcStatus(); // ステータスを再計算
 
 	UpdateData( FALSE );
+
+	CDialogEx::OnVScroll( nSBCode, nPos, pScrollBar );
 }
 
 
@@ -471,12 +575,11 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	};
 
 	if ( inputId < 12 )	// 最初の12個はステータスの実数値を増減する(けど、実質努力値ボタンと一緒の扱いになると思う)
-
 	{
 		if ( inputId % 2 )
 		{
 			// 奇数番目は + ボタン
-			update( StatusKind * 2 + inputId / 2, 1 ); // 努力値を修正 -> Lvによって1増えるのに必要な努力値が違うので注意！（あとで直す！！！）
+			update( PokemonData::StatusKind * 2 + inputId / 2, 1 ); // 努力値を修正 -> Lvによって1増えるのに必要な努力値が違うので注意！（あとで直す！！！）
 			UpdateData( FALSE );
 
 			AllCalcStatus(); // ステータスを再計算
@@ -484,7 +587,7 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 		else
 		{
 			// 偶数番目は - ボタン
-			update( StatusKind * 2 + inputId / 2, -1 );
+			update( PokemonData::StatusKind * 2 + inputId / 2, -1 );
 			UpdateData( FALSE );
 
 			AllCalcStatus(); // ステータスを再計算
@@ -502,12 +605,15 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	}
 	else if ( inputId < 28 ) // 次の10個は性格補正
 	{
+		// + あるいは - が押された時、最も低い / 高いステータスが - / + になるように性格を変えてあげたい
 	}
 	else if ( inputId < 38 ) // 次の10個はランク補正
 	{
+		// ステータスそのものは再計算不要だから、ここでやることは特にない…？
 	}
 	else if ( inputId < 48 ) // 次の10個は特性補正
 	{
+		// 同上
 		// 自分で入れておいてアレだけど、特性補正ってなんだ？
 		// ランク変化じゃない、古代活性とかそういうやつかな…？
 		// 総大将みたいに、値が変わるパターンがあるから、一律1.3倍みたいなことはできないか…。
@@ -555,16 +661,9 @@ void CPokeCalcDDlg::OnChangeEdit1()
 		std::vector<CString> nameList;
 		while ( rs.IsEOF() == FALSE )
 		{
-			for ( int i = 0; i < nFields; ++i )
-			{
-//				rs.GetODBCFieldInfo( i, fi );
-//				MessageBox( fi.m_strName, _T( "info" ), MB_ICONINFORMATION );
-				CString strValue;
-				rs.GetFieldValue( i, strValue );
-				if ( i == 1 ) nameList.emplace_back( strValue ); // ちょっと試したいので暫定処理で
-//				MessageBox( strValue, _T( "value" ), MB_ICONINFORMATION );
-			}
-
+			CString strValue;
+			rs.GetFieldValue( 1, strValue );
+			nameList.emplace_back( strValue ); // 名前をリストに突っ込む
 			rs.MoveNext();
 		}
 
@@ -575,33 +674,43 @@ void CPokeCalcDDlg::OnChangeEdit1()
 
 			CRect rect;
 			m_editCtrl_Name.GetWindowRect( &rect );
-			rect.bottom = rect.top + nameList.size() * 24; // 24px × ポケモンの数くらいにしてみる
+			rect.top = rect.top += 24; // エディットボックスが隠れないようにする
+			rect.bottom = rect.top + ( nameList.size() + 1 ) * 24; // 24px × ポケモンの数くらいにしてみる
 			m_complDlg.MoveWindow( &rect );
 			m_complDlg.ShowWindow( SW_SHOW );
+//			m_complDlg.RunModalLoop(); // ループで止まっちゃうと次の文字が入力できなくて困るのでは…？
 		}
 
 		// エディットボックス（にするかコンボボックスにするかは要検討）に反映させて閉じる -> 補完ダイアログからの入力を受けて反映させたい
 		// 反映させる処理
 		UpdateData( FALSE );
-
 		rs.Close();
+
+		// ステータスを計算する -> ポケモンを選択されてからやらないとダメ
+//		AllCalcStatus();
 	} catch ( CDBException &e ) {
 		TCHAR msg[1024];
 		e.GetErrorMessage( msg, sizeof( msg ) );
 		MessageBox( msg, _T( "error" ), MB_ICONERROR );
 	}
-
-	// たぶんここじゃないけど、実装メモを兼ねて -> ポップアップウィンドウからポケモンを選択されたらこの処理を動かしたい -> 別ダイアログに移植かな…？
-	try {
-		// 実際にポケモンが選ばれたら、種族値から実数値を自動入力したい
-		CString strSQL;
-		strSQL.Format( _T( "select * from pokemon where 名前 Like '%%%s%%'" ), m_editValName ); // フィールドは全部取るのでselect *にする
-		rs.Open( CRecordset::forwardOnly, strSQL );
-		CODBCFieldInfo fi;
-		for ( int i = 3; i < 8; ++i ) // 何番目のフィールドかはデータベース見て直値で入れておく（本当は良くないけど…）
-		{
-			rs.GetODBCFieldInfo( i, fi );
-			m_editStatus[i - 3] = fi.m_strName; // 計算用の関数を呼ぶべき
-		}
-	} catch ( ... ) {}
 }
+
+
+void CPokeCalcDDlg::OnCbnSelchangeCombo()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	// 性格を変更したらステータスを再計算する
+	if ( m_editValName.IsEmpty() == FALSE )
+	{
+		AllCalcStatus();
+	}
+}
+
+// ステータス再計算要求
+afx_msg LRESULT CPokeCalcDDlg::OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam )
+{
+	AllCalcStatus();
+	return 0;
+}
+
+
