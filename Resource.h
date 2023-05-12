@@ -9,6 +9,12 @@
 #define IDR_MAINFRAME                   128
 #define IDD_POPUP_DATA                  130
 #define IDD_POPUP_COMPLDATA             130
+#define IDD_POKEMON_DIALOG1             132
+#define IDD_DIALOG1                     134
+#define IDD_POKEMON_DIALOG2             134
+#define IDD_DIALOG2                     136
+#define IDD_DAMANGE_WINDOW              136
+#define IDD_DAMAGE_WINDOW               136
 #define IDC_RADIO1                      1000
 #define IDC_RADIO2                      1001
 #define IDC_RADIO3                      1002
@@ -282,14 +288,16 @@
 #define IDC_CHECK48                     1259
 #define IDC_CHECK49                     1260
 #define IDC_CHECK50                     1261
+#define IDC_STATIC_EFFTVAL1             1262
+#define IDC_STATIC_EFFTVAL2             1263
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1125
+#define _APS_NEXT_CONTROL_VALUE         1264
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

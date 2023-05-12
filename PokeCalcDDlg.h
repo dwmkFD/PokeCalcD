@@ -57,6 +57,10 @@ protected:
 	std::vector<CString> m_editStatus; // HABCDSはこの順で、実数値、個体値、努力値の順に格納する
 	std::vector<CScrollBar> m_scrollStatus; // エディットボックスの隣にくっついてるスクロールバー
 
+	// 振った努力値の合計値表示
+	CFont m_font;
+	CStatic m_strEfftTotal[2];
+
 	CComboBox m_cmbTeraType; // テラスタイプ
 private:
 	/* 初期化 */

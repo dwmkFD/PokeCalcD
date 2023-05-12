@@ -70,6 +70,8 @@ BOOL CComplDataDlg::PreTranslateMessage( MSG *pMsg )
 							strName.AppendChar( _totlower( pMsg->wParam ) );
 							GetParent()->GetDlgItem( IDC_EDIT1 )->SetWindowText( strName );
 							clearListBox();
+							GetParent()->GetDlgItem( IDC_EDIT1 )->SetFocus();
+							static_cast<CEdit *>( GetParent()->GetDlgItem( IDC_EDIT1 ) )->SetSel( strName.GetLength(), strName.GetLength() );
 						}
 						else
 						{
@@ -77,7 +79,10 @@ BOOL CComplDataDlg::PreTranslateMessage( MSG *pMsg )
 							strName.AppendChar( _totlower( pMsg->wParam ) );
 							GetParent()->GetDlgItem( IDC_EDIT21 )->SetWindowText( strName );
 							clearListBox();
+							GetParent()->GetDlgItem( IDC_EDIT21 )->SetFocus();
+							static_cast<CEdit *>( GetParent()->GetDlgItem( IDC_EDIT21 ) )->SetSel( strName.GetLength(), strName.GetLength() );
 						}
+						ShowWindow( SW_HIDE );
 					}
 				}
 				break;

@@ -93,7 +93,7 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange( pDX );
 
-// ポケモン1側
+	// ポケモン1側
 	DDX_Control( pDX, IDC_EDIT1, m_editCtrl_Name[0] );
 	DDX_Text( pDX, IDC_EDIT1, m_editValName[0] );
 
@@ -167,10 +167,12 @@ void CPokeCalcDDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control( pDX, IDC_COMBO12, m_cmbAbility );
 	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
 	DDX_Control( pDX, IDC_COMBO14, m_cmbTeraType );
+	DDX_Control( pDX, IDC_STATIC_EFFTVAL1, m_strEfftTotal[0] );
 
-// ポケモン2側
+	// ポケモン2側
 	DDX_Control( pDX, IDC_EDIT21, m_editCtrl_Name[1] );
 	DDX_Text( pDX, IDC_EDIT21, m_editValName[1] );
+	DDX_Control( pDX, IDC_STATIC_EFFTVAL2, m_strEfftTotal[1] );
 }
 
 BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
@@ -243,7 +245,12 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 		m_editStatus[i + PokemonData::StatusKind] = _T( "31" );
 		m_editStatus[i + PokemonData::StatusKind * 2] = _T( "0" );
 	}
+
 	UpdateData( FALSE ); // 画面側に反映させる
+
+	// ポケモン1側のポケモン名を入力するエディットボックスにフォーカスを合わせる
+	GetDlgItem( IDC_EDIT1 )->SetFocus();
+	return ( FALSE ); // フォーカスを設定するのでFALSEを返す
 
 	return TRUE;  // フォーカスをコントロールに設定した場合を除き、TRUE を返します。
 }
@@ -518,7 +525,7 @@ void CPokeCalcDDlg::AllCalcStatus()
 	//    -> 1匹2匹程度なら、毎回データベースから拾ってきても良いかも
 	CRecordset rs( &m_database );
 	CString strSQL;
-	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName[0] ); // 2回のループにしないとダメ
+	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName[0] ); // 2回のループにしないとダメ！！！！！！
 	auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 	short nFields = rs.GetODBCFieldCount();
 
@@ -571,6 +578,19 @@ void CPokeCalcDDlg::AllCalcStatus()
 
 			// 性格補正する
 			// ちょっと実装保留で…
+		}
+
+		// 努力値表示更新
+		for ( int j = 0; j < 2; ++j )
+		{
+			val = 0;
+			CString strEfftVal;
+			for ( int i = 0; i < PokemonData::StatusKind; ++i )
+			{
+				val += status[12 + i];
+			}
+			strEfftVal.Format( _T( "%d%s" ), ( val > 510 ? val - 510 : val ), ( val > 510 ? _T( "over" ) : _T( "/510" ) ) );
+			m_strEfftTotal[j].SetWindowText( strEfftVal );
 		}
 
 		UpdateData( FALSE );
@@ -713,6 +733,11 @@ void CPokeCalcDDlg::OnBnClickedStatusButton( UINT id )
 	else if ( inputId < 28 ) // 次の10個は性格補正
 	{
 		// + あるいは - が押された時、最も低い / 高いステータスが - / + になるように性格を変えてあげたい
+		// -> どちらかというと、、、
+		//    攻撃 or 特攻を+-した場合→もう一方を-+する
+		//    素早さを+-した場合→攻撃 or 特攻のうち低い/高い方(一緒なら攻撃)を-+する
+		//    っていう感じ？
+		//    でもそれは「無補正」から変える時か「今+-のやつを-+に変える時」の話なんだよね…(+-のうち一方がユーザの意図通りだったら動かしちゃダメ)
 		// getMaxMinStatus(); // 的なやつを実装したい
 	}
 	else if ( inputId < 38 ) // 次の10個はランク補正
