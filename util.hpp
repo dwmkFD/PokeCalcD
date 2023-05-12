@@ -132,6 +132,22 @@ public:
 
 	CString exec( const CString &str ) {
 		CString res = _T( "" );
+
+		auto judge_consonant = []( CString str ) {
+			if ( str.GetLength() < 2 )
+			{
+				return ( false );
+			}
+			else if ( str[0] == str[1] )
+			{
+				return ( true );
+			}
+			else
+			{
+				return ( false );
+			}
+		};
+
 		// •¶Žš—ñ‚ª’Z‚¢‚±‚Æ‚ª‚í‚©‚Á‚Ä‚é‚Ì‚Å•’Ê‚É‘S’Tõ‚·‚é
 		for ( int i = 0; i < str.GetLength(); i++ )
 		{
@@ -142,6 +158,11 @@ public:
 				{
 					res += tmp;
 					i = j - 1; break;
+				}
+				else if ( judge_consonant( str.Mid( i, j - 1 ) ) )
+				{
+					res += _T( "ƒb" );
+					i = j; break; // Žq‰¹‚ðˆê‚ÂŽc‚·
 				}
 			}
 		}

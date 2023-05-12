@@ -23,12 +23,13 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV サポート
 
+private:
+	int m_id;
+
 public:
+	void setID( int id ) { m_id = id; }
 	void setListBox( std::vector<CString> nameList ); // リストボックスに補完したポケモン名を設定する
 	void clearListBox(); // リストボックスをクリアする
-	void selSideSet( bool side ) {
-		m_side = side;
-	}
 
 	afx_msg void OnKillFocus( CWnd *pNewWnd );
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
@@ -39,6 +40,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
-	bool m_side; // trueならポケモン1、falseならポケモン2の名前を補完する
 	CListBox m_lboxComplName; // 補完用リストボックス
 };
