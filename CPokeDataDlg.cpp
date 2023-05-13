@@ -394,6 +394,8 @@ void CPokeDataDlg::AllCalcStatus()
 	auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 	short nFields = rs.GetODBCFieldCount();
 
+	m_pokemon.clear(); // 前に持っていた可能性のある情報をクリアする
+
 	// ステータス計算式：
 	// HPの場合：(種族値×2+個体値+努力値÷4)×レベル÷100+レベル+10
 	// それ以外：{(種族値×2+個体値+努力値÷4)×レベル÷100+5}×せいかく補正
@@ -431,15 +433,18 @@ void CPokeDataDlg::AllCalcStatus()
 			_tcstol( m_editStatus[12 + PokemonData::Speed_Index], nullptr, 10 ),
 		};
 
+		// Lvを保存する
+		m_pokemon.m_Level = lv;
+
 		// HPを計算する
-		int val = ( status[PokemonData::HP_Index] * 2 + status[6 + PokemonData::HP_Index] + status[12 + PokemonData::HP_Index] / 4 ) * lv / 100 + lv + 10;
-		m_editStatus[PokemonData::HP_Index].Format( _T( "%d" ), val );
+		m_pokemon.m_status[PokemonData::HP_Index] = ( status[PokemonData::HP_Index] * 2 + status[6 + PokemonData::HP_Index] + status[12 + PokemonData::HP_Index] / 4 ) * lv / 100 + lv + 10;
+		m_editStatus[PokemonData::HP_Index].Format( _T( "%d" ), m_pokemon.m_status[PokemonData::HP_Index] );
 
 		// それ以外のステータスを計算する
 		for ( int i = 1; i < PokemonData::StatusKind; ++i )
 		{
-			val = ( status[PokemonData::HP_Index + i] * 2 + status[6 + PokemonData::HP_Index + i] + status[12 + PokemonData::HP_Index + i] / 4 ) * lv / 100 + 5;
-			m_editStatus[PokemonData::HP_Index + i].Format( _T( "%d" ), val );
+			m_pokemon.m_status[PokemonData::HP_Index + i] = ( status[PokemonData::HP_Index + i] * 2 + status[6 + PokemonData::HP_Index + i] + status[12 + PokemonData::HP_Index + i] / 4 ) * lv / 100 + 5;
+			m_editStatus[PokemonData::HP_Index + i].Format( _T( "%d" ), m_pokemon.m_status[PokemonData::HP_Index + i] );
 
 			// 性格補正する
 			// ちょっと実装保留で…
@@ -448,7 +453,7 @@ void CPokeDataDlg::AllCalcStatus()
 		// 努力値表示更新
 		for ( int j = 0; j < 2; ++j )
 		{
-			val = 0;
+			int val = 0;
 			CString strEfftVal;
 			for ( int i = 0; i < PokemonData::StatusKind; ++i )
 			{
@@ -458,18 +463,46 @@ void CPokeDataDlg::AllCalcStatus()
 			m_strEfftTotal.SetWindowText( strEfftVal );
 		}
 
+		// データベースから拾った情報も保存
+		CString strInfo;
+		rs.GetFieldValue( 11, strInfo );
+		m_pokemon.m_Height = _tcstol( strInfo, nullptr, 10 ); // 高さ
+		rs.GetFieldValue( 12, strInfo );
+		m_pokemon.m_Weight = _tcstol( strInfo, nullptr, 10 ); // 重さ
+		for ( int i = 0; i < 3; ++i )
+		{
+			rs.GetFieldValue( 13 + i, strInfo );
+			if ( strInfo.IsEmpty() == FALSE )
+			{
+				m_pokemon.m_ability.emplace_back( strInfo ); // 特性
+			}
+		}
+		for ( int i = 0; i < 2; ++i )
+		{
+			rs.GetFieldValue( 2 + i, strInfo );
+			if ( strInfo.IsEmpty() == FALSE )
+			{
+				m_pokemon.m_type.emplace_back( strInfo ); // タイプ
+			}
+		}
+		for ( int i = 0; i < rs.GetODBCFieldCount(); ++i )
+		{
+			rs.GetFieldValue( 16 + i, strInfo );
+			if ( strInfo.IsEmpty() == FALSE )
+			{
+				m_pokemon.m_move.emplace_back( strInfo ); // 覚える技
+			}
+			else
+			{
+				break;
+			}
+		}
+
 		UpdateData( FALSE );
 	}
 	catch ( ... ) {}
 }
 
-// 親ダイアログでダメージ計算をするためにポケモン情報を返す
-PokemonData CPokeDataDlg::getPokemonData()
-{
-	PokemonData pokemon;
-
-	return ( pokemon ); // 言うてメンバ変数は大きくはないからコピーで返しても良いでしょ…。
-}
 
 // ラジオボタン制御のベース関数
 void CPokeDataDlg::OnBnClickedRadioBase( UINT id )

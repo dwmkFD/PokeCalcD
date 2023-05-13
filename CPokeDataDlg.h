@@ -42,6 +42,8 @@ protected:
 
 	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
 
+	PokemonData m_pokemon; // このポケモンの情報
+
 	CEdit m_editCtrl_Name;	// 名前
 	CString m_editValName;	// 名前(値型)
 	CComboBox m_cmbNature;	// 性格
@@ -101,10 +103,11 @@ private:
 	void statusCalcBase( UINT id, bool isGain ); // ステータス計算ベース関数
 	void AllEditCheck(); // レベルや個体値、努力値が指定の範囲に収まっているか？をチェックし、溢れていたら丸める
 	void AllCalcStatus(); // 個体値や努力値を修正された場合にステータスを再計算する
-	PokemonData getPokemonData(); // このダイアログで設定されたポケモンデータを親ダイアログに渡すための関数
 public:
 	void setDatabase( CDatabase *db ) { m_database = db; } // 親ダイアログで開いたデータベースを参照できるようにする
 	void setID( int id ) { m_id = id; } // 子ダイアログにメッセージ通知するために識別子を持つ
+	PokemonData getPokemonData() { return ( m_pokemon ); } // このダイアログで設定されたポケモンデータを親ダイアログに渡すための関数
+
 	afx_msg void OnBnClickedRadioBase( UINT id );
 	afx_msg void OnBnClickedStatusButton( UINT id );
 	afx_msg void OnCbnSelChangeComboBox( UINT id );

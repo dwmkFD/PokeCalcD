@@ -104,6 +104,8 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 	ON_WM_QUERYDRAGICON()
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO12, &CPokeCalcDDlg::OnBnClickedRadioBase )
 	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeCalcDDlg::OnPcdStatusRecalculate )
+	ON_MESSAGE( PCD_STATUS_ADDNAMECHAR, &CPokeCalcDDlg::OnPcdAddNameChar )
+	ON_MESSAGE( PCD_DAMAGECALC_REQUEST, &CPokeCalcDDlg::OnPcdDamageCalcRequest )
 	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
@@ -269,7 +271,10 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdStatusRecalculate( WPARAM wParam, LPARAM lPa
 	m_dlgPokeData[id].GetDlgItem( IDC_EDIT1 )->SetWindowTextW( *strName );
 	m_dlgPokeData[id].SendMessage( PCD_STATUS_RECALCULATE );
 
-	return 0;
+	// ダメージ計算も要求する
+	OnPcdDamageCalcRequest( 0, 0 );
+
+	return ( 0 );
 }
 
 // エディットボックスに1文字追加
@@ -284,6 +289,24 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdAddNameChar( WPARAM wParam, LPARAM lParam )
 	m_dlgPokeData[id].GetDlgItem( IDC_EDIT1 )->SetFocus();
 	static_cast<CEdit *>( m_dlgPokeData[id].GetDlgItem( IDC_EDIT1 ) )->SetSel( strName.GetLength(), strName.GetLength() );
 	m_dlgPokeData[id].SendMessage( EN_SELCHANGE );
+
+	return ( 0 );
+}
+
+// ダメージ計算要求
+afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lParam )
+{
+	PokemonData pokemon1 = m_dlgPokeData[0].getPokemonData();
+	PokemonData pokemon2 = m_dlgPokeData[1].getPokemonData();
+	CBattleSettings option = { 0 };
+
+	// HPがゼロのポケモンはあらゆる条件において存在しないので、データ不正としてダメージ計算しない
+	if ( pokemon1.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );
+	if ( pokemon2.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );
+
+	// チェックボックス等を見てオプションを設定する
+
+	auto damage_result = m_damage->calc( pokemon1, pokemon2, option );
 
 	return ( 0 );
 }

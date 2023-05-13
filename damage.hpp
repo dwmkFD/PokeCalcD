@@ -130,12 +130,12 @@ public:
 			if ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
 			{
 				// 物理技の時は、攻撃側の「攻撃」と防御側の「防御」を使う
-				A *= atk.m_Attack; D *= def.m_Block;
+				A *= atk.m_status[PokemonData::Attack_Index]; D *= def.m_status[PokemonData::Block_Index];
 			}
 			if ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK )
 			{
 				// 特殊技の時は、攻撃側の「特攻」と防御側の「特防」を使う
-				A *= atk.m_Contact; D *= def.m_Diffence;
+				A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Diffence_Index];
 			}
 
 			// ワンダールームの場合はDを再計算する処理を入れる（防御と特防を入れ替える）

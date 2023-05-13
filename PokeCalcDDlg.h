@@ -21,6 +21,7 @@
 // メッセージID定義(自動ではやってくれないみたい…)
 #define PCD_STATUS_RECALCULATE ( WM_USER + 1 )
 #define PCD_STATUS_ADDNAMECHAR ( PCD_STATUS_RECALCULATE + 1 )
+#define PCD_DAMAGECALC_REQUEST ( PCD_STATUS_ADDNAMECHAR + 1 )
 
 
 // CPokeCalcDDlg ダイアログ
@@ -86,4 +87,5 @@ public:
 protected:
 	afx_msg LRESULT OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam );
 	afx_msg LRESULT OnPcdAddNameChar( WPARAM wParam, LPARAM lParam );
+	afx_msg LRESULT OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lParam );
 };

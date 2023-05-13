@@ -15,12 +15,7 @@ public:
 	int m_Level; // レベル
 
 	// HABCDS
-	int m_HitPoint;
-	int m_Attack;
-	int m_Block;
-	int m_Contact;
-	int m_Diffence;
-	int m_Speed;
+	int m_status[6];
 
 	// 性別
 	int m_gender; // メス、不明、オス → -1, 0, 1とか。闘争心とかの対応
@@ -41,6 +36,14 @@ public:
 	std::vector<CString> m_ability;	// 特性
 
 	std::vector<CString> m_move; // 覚える技
+
+	void clear() {
+		// 上書きされない情報をクリアする -> でないと、ポケモンを変えても前に持ってたタイプ等の情報を引き継いでしまう…
+		m_zukkanNumLocal.clear();
+		m_type.clear();
+		m_ability.clear();
+		m_move.clear();
+	}
 
 	static constexpr unsigned int HP_Index = 0;
 	static constexpr unsigned int Attack_Index = 1;
