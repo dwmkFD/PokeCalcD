@@ -168,56 +168,99 @@ public:
 			}
 
 			/* STEP2-2. A/Dにランク補正を入れるのはここ？ */
-			// -> 急所に当たる場合は不利な効果を無視するので、ちょっとめんどいことになるかも…
-
-			/* STEP2-LAST. 計算した威力を使って残りを計算 */
-			damage *= ( ( atk.m_Level * 2 ) / 5 ); damage = ( damage / 4096 ) * 4096; damage += 8192;
-			damage = damage * ( power * A ) / D; damage = ( damage / 4096 ) * 4096;
-			damage /= 50; damage = ( damage / 4096 ) * 4096;
-			damage += 8192; damage = ( damage / 4096 ) * 4096;
-
-			/* STEP3. 範囲補正 */
-			// m_moveDBからではなくてoptionのダブル補正から拾わなきゃダメ
-//			damage *= m_moveDB[atkmove].m_range; damage += 2047; damage /= 4096; damage *= 4096;
-
-			/* STEP4. 親子愛補正は第九世代には存在しない */
-
-			/* STEP5. 天気補正 */
-			if ( option.m_weather == 1 )
+			int rank1 = 2, rank2 = 2;
+			int A_critical = A, D_critical = D;
+			if ( atk.m_option.m_rank > 0 )
 			{
-				// 晴れの時、炎技は1.5倍、水技は0.5倍
-				if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
-				{
-					damage *= ( 4096 + 2048 );
-					damage += 2047;
-					damage /= 4096;
-				}
-				else if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
-				{
-					damage *= 2048;
-					damage += 2047;
-					damage /= 4096;
-				}
-			} else if ( option.m_weather == 2 )
+				rank1 += atk.m_option.m_rank;
+			}
+			else if ( atk.m_option.m_rank < 0 )
 			{
-				// 雨の時、炎技は0.5倍、水技は1.5倍
-				// 晴れの時、炎技は1.5倍、水技は0.5倍
-				if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
-				{
-					damage *= ( 4096 + 2048 );
-					damage += 2047;
-					damage /= 4096;
-				}
-				else if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
-				{
-					damage *= 2048;
-					damage += 2047;
-					damage /= 4096;
-				}
+				rank2 += atk.m_option.m_rank;
+			}
+			A = A * rank1; A = A / rank2;
+			if ( (double)rank1 / rank2 > 1.0 )
+			{
+				A_critical = A; // 急所に当たる場合、有利な効果(攻撃側の攻撃ランク上昇)だけ残す
 			}
 
+			if ( def.m_option.m_rank > 0 )
+			{
+				rank1 += def.m_option.m_rank;
+			}
+			else if ( def.m_option.m_rank < 0 )
+			{
+				rank2 += def.m_option.m_rank;
+			}
+			D = D * rank1; D = D / rank2;
+			if ( (double)rank1 / rank2 < 1.0 )
+			{
+				D_critical = D; // 急所に当たる場合、有利(防御側の防御ランク低下)な効果だけ残す
+			}
+
+			/* STEP2-LAST. 計算した威力を使って残りを計算 */
+			auto damage_base = [&]( const long long a, const long long d, const int p, long long &dmg ) {
+				dmg = dmg * ( power * a ) / d; dmg = ( dmg / 4096 ) * 4096;
+				dmg /= 50; dmg = ( dmg / 4096 ) * 4096;
+				dmg += 8192; dmg = ( dmg / 4096 ) * 4096;
+				/* STEP3. 範囲補正 */
+				// 切り捨て、四捨五入、五捨五超入は関数化したいね
+				if ( option.m_range )
+				{
+					// ダブル補正がある場合、ダメージを75％にする
+					dmg *= ( 2048 + 1024 );
+					dmg /= 4096;
+					dmg += 2047;
+					dmg /= 4096; dmg *= 4096;
+				}
+
+				/* STEP4. 親子愛補正は第九世代には存在しない */
+
+				/* STEP5. 天気補正 */
+				if ( option.m_weather == 1 )
+				{
+					// 晴れの時、炎技は1.5倍、水技は0.5倍
+					if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
+					{
+						dmg *= ( 4096 + 2048 );
+						dmg += 2047;
+						dmg /= 4096;
+					}
+					else if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
+					{
+						dmg *= 2048;
+						dmg += 2047;
+						dmg /= 4096;
+					}
+				}
+				else if ( option.m_weather == 2 )
+				{
+					// 雨の時、炎技は0.5倍、水技は1.5倍
+					// 晴れの時、炎技は1.5倍、水技は0.5倍
+					if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
+					{
+						dmg *= ( 4096 + 2048 );
+						dmg += 2047;
+						dmg /= 4096;
+					}
+					else if ( m_moveDB[atkmove].m_type == _T( "ほのお" ) )
+					{
+						dmg *= 2048;
+						dmg += 2047;
+						dmg /= 4096;
+					}
+				}
+			};
+
+			// -> 急所に当たる場合は不利な効果を無視するので、別々に計算する
+			long long damage_critical;
+			damage *= ( ( atk.m_Level * 2 ) / 5 ); damage = ( damage / 4096 ) * 4096; damage += 8192;
+			damage_critical = damage;
+			damage_base( A, D, power, damage );
+			damage_base( A_critical, D_critical, power, damage_critical );
+
 			/* STEP6. 急所補正 */
-			long long damage_critical = damage * ( 2048 + 4096 ) / 4096;
+			damage_critical = damage_critical * ( 2048 + 4096 ) / 4096;
 			damage_critical += 2047; damage_critical /= 4096; damage_critical *= 4096;
 
 			/* STEP7. 乱数補正 */

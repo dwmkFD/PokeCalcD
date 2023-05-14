@@ -12,10 +12,9 @@
 class PokemonDataSub {
 public:
 	int m_barrier; // bit0: リフレクター、 bit1: 光の壁
-	uint64_t m_Ability; // 特性ビットをセット
+	uint64_t m_ability; // 特性ビットをセット
 	uint64_t m_item; // 持ち物
-				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
-				// bit10: 達人の帯、
+	uint64_t m_rank; // ランク補正
 
 	// 特性ビット定義
 	static constexpr uint64_t ABILITY_SNIPER        = 0x0000000000000001; // スナイパー
@@ -31,20 +30,42 @@ public:
 	static constexpr uint64_t ABILITY_FILTER        = 0x0000000000000400; // ハードロック/フィルター
 	static constexpr uint64_t ABILITY_PRISMARMOR    = 0x0000000000000800; // プリズムアーマー
 	static constexpr uint64_t ABILITY_LONGREACH     = 0x0000000000001000; // 遠隔
-	static constexpr uint64_t ABILITY_X = 0x0000000000002000; // 
-	static constexpr uint64_t ABILITY_Y = 0x0000000000004000; // 
-	static constexpr uint64_t ABILITY_Z = 0x0000000000008000; // 
+	static constexpr uint64_t ABILITY_A = 0x0000000000002000; // ノーマルスキン
+	static constexpr uint64_t ABILITY_B = 0x0000000000004000; // スカイスキン
+	static constexpr uint64_t ABILITY_C = 0x0000000000008000; // エレキスキン
+	static constexpr uint64_t ABILITY_D = 0x0000000000010000; // フリーズスキン
+	static constexpr uint64_t ABILITY_E = 0x0000000000020000; // フェアリースキン
+	static constexpr uint64_t ABILITY_F = 0x0000000000040000; // アナライズ
+	static constexpr uint64_t ABILITY_G = 0x0000000000080000; // うるおいボイス
+	static constexpr uint64_t ABILITY_H = 0x0000000000100000; // エアロック/ノー天気
+	static constexpr uint64_t ABILITY_I = 0x0000000000200000; // 硬い爪
+	static constexpr uint64_t ABILITY_J = 0x0000000000400000; // 頑丈顎
+	static constexpr uint64_t ABILITY_K = 0x0000000000800000; // 肝っ玉
+	static constexpr uint64_t ABILITY_L = 0x0000000000100000; // 強運
+	static constexpr uint64_t ABILITY_M = 0x0000000000200000; // 激流
+	static constexpr uint64_t ABILITY_N = 0x0000000000400000; // 新緑
+	static constexpr uint64_t ABILITY_O = 0x0000000000800000; // 猛火
+	static constexpr uint64_t ABILITY_P = 0x0000000001000000; // 変幻自在/リベロ
+	static constexpr uint64_t ABILITY_Q = 0x0000000002000000; // 五里霧中
+	static constexpr uint64_t ABILITY_R = 0x0000000004000000; // 根性
+	static constexpr uint64_t ABILITY_S = 0x0000000008000000; // サンパワー
+	static constexpr uint64_t ABILITY_T = 0x0000000001000000; // スキルリンク
+	static constexpr uint64_t ABILITY_U = 0x0000000002000000; // 水泡
+	static constexpr uint64_t ABILITY_V = 0x0000000004000000; // 捨て身
+	static constexpr uint64_t ABILITY_W = 0x0000000008000000; // 砂の力
 
 	// アイテムビット定義
-	static constexpr uint64_t ITEM_METRONOME    = 0x000000000000003F; // メトロノームN回目
-	static constexpr uint64_t ITEM_LIFEORB      = 0x0000000000000040; // 命の珠
-	static constexpr uint64_t ITEM_TYPE_ENHANCE = 0x0000000000000080; // タイプ強化アイテム
-	static constexpr uint64_t ITEM_SOULDEW      = 0x0000000000000100; // こころのしずく
-	static constexpr uint64_t ITEM_CHOICEBAND   = 0x0000000000000200; // こだわりハチマキ
-	static constexpr uint64_t ITEM_CHOICESPECS  = 0x0000000000000400; // こだわりメガネ
-	static constexpr uint64_t ITEM_EXPERTBELT   = 0x0000000000000800; // たつじんのおび
-	static constexpr uint64_t ITEM_MUSCLEBAND   = 0x0000000000001000; // ちからのハチマキ
-	static constexpr uint64_t ITEM_WISEGLASSES  = 0x0000000000002000; // ものしりメガネ
+	static constexpr uint64_t ITEM_METRONOME       = 0x000000000000003F; // メトロノームN回目
+	static constexpr uint64_t ITEM_LIFEORB         = 0x0000000000000040; // 命の珠
+	static constexpr uint64_t ITEM_TYPE_ENHANCE    = 0x0000000000000080; // タイプ強化アイテム
+	static constexpr uint64_t ITEM_SOULDEW         = 0x0000000000000100; // こころのしずく
+	static constexpr uint64_t ITEM_CHOICEBAND      = 0x0000000000000200; // こだわりハチマキ
+	static constexpr uint64_t ITEM_CHOICESPECS     = 0x0000000000000400; // こだわりメガネ
+	static constexpr uint64_t ITEM_EXPERTBELT      = 0x0000000000000800; // たつじんのおび
+	static constexpr uint64_t ITEM_MUSCLEBAND      = 0x0000000000001000; // ちからのハチマキ
+	static constexpr uint64_t ITEM_WISEGLASSES     = 0x0000000000002000; // ものしりメガネ
+	static constexpr uint64_t ITEM_HALFDAMAGEBERRY = 0x0000000000004000; // 半減実
+	static constexpr uint64_t ITEM_NORMALGEM       = 0x0000000000008000; // ノーマルジュエル
 };
 
 // ポケモンのデータ
