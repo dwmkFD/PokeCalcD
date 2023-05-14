@@ -117,10 +117,10 @@ public:
 
 			// サイコショック等の計算が特殊な技は、A/D/M等を独自計算する必要があるので、あとで実装する
 			// 4096は12bit固定小数点演算のため（整数で扱うと、1.0＝4096となる）
-			std::vector<int> tmpresult( 32 ); // 急所の有無それぞれについて、乱数による16パターンのダメージを算出する
-			int damage = 4096;
-			int A = 4096, D = 4096, M = 4096;
-			int Mhalf = 4096, Mfilter = 4096, MTwice = 4096;
+			std::vector<long long> tmpresult( 32 ); // 急所の有無それぞれについて、乱数による16パターンのダメージを算出する
+			long long damage = 4096;
+			long long A = 1, D = 1, M = 1;
+			long long Mhalf = 1, Mfilter = 1, MTwice = 1;
 
 			/* STEP1. A/Dを決定 */ // --> 要確認！！！　ランク補正ってここのA/Dを直接いじる？
 			if ( ( m_moveDB[atkmove].m_category & 0x3 ) == 0 )
@@ -159,12 +159,14 @@ public:
 			// -> 急所に当たる場合は不利な効果を無視するので、ちょっとめんどいことになるかも…
 
 			/* STEP2-LAST. 計算した威力を使って残りを計算 */
-			damage *= ( ( atk.m_Level * 2 ) / 5 ) + 2; damage = ( damage / 4096 ) * 4096;
-			damage *= ( power * A ) / D; damage = ( damage / 4096 ) * 4096;
-			damage /= 50; damage += 2; damage = ( damage / 4096 ) * 4096;
+			damage *= ( ( atk.m_Level * 2 ) / 5 ); damage = ( damage / 4096 ) * 4096; damage += 8192;
+			damage = damage * ( power * A ) / D; damage = ( damage / 4096 ) * 4096;
+			damage /= 50; damage = ( damage / 4096 ) * 4096;
+			damage += 8192; damage = ( damage / 4096 ) * 4096;
 
 			/* STEP3. 範囲補正 */
-			damage *= m_moveDB[atkmove].m_range; damage += 2047; damage /= 4096; damage *= 4096;
+			// m_moveDBからではなくてoptionのダブル補正から拾わなきゃダメ
+//			damage *= m_moveDB[atkmove].m_range; damage += 2047; damage /= 4096; damage *= 4096;
 
 			/* STEP4. 親子愛補正は第九世代には存在しない */
 
@@ -203,7 +205,7 @@ public:
 			}
 
 			/* STEP6. 急所補正 */
-			int damage_critical = damage * ( 2048 + 4096 ) / 4096;
+			long long damage_critical = damage * ( 2048 + 4096 ) / 4096;
 			damage_critical += 2047; damage_critical /= 4096; damage_critical *= 4096;
 
 			/* STEP7. 乱数補正 */
@@ -221,8 +223,9 @@ public:
 					for ( int i = 0; i < 32; ++i )
 					{
 						tmpresult[i] *= ( 4096 + 2048 );
-						tmpresult[i] += 2047;
 						tmpresult[i] /= 4096;
+						tmpresult[i] += 2047;
+						tmpresult[i] /= 4096; tmpresult[i] *= 4096;
 					}
 				}
 			}
@@ -476,9 +479,17 @@ public:
 
 			/* STEP12. Mprotect補正は第九世代には存在しない */
 
+			/* STEP13. 計算結果を4096で割る */
+			// ここまでlong longで計算したのでint型に変換(別に全部long longにしても良いと思うんだけど…)
+			std::vector<int> tmpres2( 32 );
+			for ( int i = 0; i < 32; ++i )
+			{
+				tmpres2[i] = tmpresult[i] / 4096;
+			}
+
 			/* LAST STEP. 計算結果を結果配列に突っ込む */
 			// 同じ技を重複してデータベースに登録してる問題をこっち側で解決する
-			result[atkmove] = tmpresult;
+			result[atkmove] = tmpres2;
 		}
 
 		// 与えるダメージが大きい技から順番に並べたいね…

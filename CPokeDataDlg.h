@@ -15,6 +15,8 @@
 
 // メッセージID定義(自動ではやってくれないみたい…)
 #define PCD_STATUS_RECALCULATE ( WM_USER + 1 )
+#define PCD_STATUS_ADDNAMECHAR ( PCD_STATUS_RECALCULATE + 1 )
+#define PCD_DAMAGECALC_REQUEST ( PCD_STATUS_ADDNAMECHAR + 1 )
 
 
 // CPokeDataDlg ダイアログ
@@ -75,7 +77,6 @@ protected:
 	int m_radioField;	// フィールド
 
 	// 処理を統一するために、vectorかmapにしてindexを対応させた方がいいと思う
-	// あと、これ全部2セット要るんだよね。。
 	BOOL m_checkGravity;		// 重力
 	BOOL m_checkWonderRoom;		// ワンダールーム
 	BOOL m_checkPlasmaShower;	// プラズマシャワー
@@ -112,7 +113,8 @@ public:
 	afx_msg void OnBnClickedStatusButton( UINT id );
 	afx_msg void OnCbnSelChangeComboBox( UINT id );
 	afx_msg void OnChangeEditBase( CEdit &editCtrl, CString &editVal );
-	afx_msg void OnChangeEdit();
+	afx_msg void OnChangeEditName();
+	afx_msg void OnChangeEditLevel();
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
 	afx_msg void OnCbnSelchangeCombo();
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );

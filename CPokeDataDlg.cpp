@@ -130,7 +130,8 @@ BEGIN_MESSAGE_MAP(CPokeDataDlg, CDialogEx)
 	ON_CONTROL_RANGE( CBN_SELCHANGE, IDC_COMBO2, IDC_COMBO6, &CPokeDataDlg::OnCbnSelChangeComboBox )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeDataDlg::OnBnClickedStatusButton )
-	ON_EN_CHANGE( IDC_EDIT1, &CPokeDataDlg::OnChangeEdit )
+	ON_EN_CHANGE( IDC_EDIT1, &CPokeDataDlg::OnChangeEditName )
+	ON_EN_CHANGE( IDC_EDIT2, &CPokeDataDlg::OnChangeEditLevel )
 	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeDataDlg::OnCbnSelchangeCombo )
 	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeDataDlg::OnPcdStatusRecalculate )
 	ON_WM_VSCROLL()
@@ -619,12 +620,12 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 		if ( inputId % 2 )
 		{
 			// 奇数番目は + ボタン
-			statusCalcBase( id / 2, true );
+			statusCalcBase( inputId / 2, true );
 		}
 		else
 		{
 			// 偶数番目は - ボタン
-			statusCalcBase( id / 2, false );
+			statusCalcBase( inputId / 2, false );
 		}
 	}
 	else if ( inputId < 18 ) // 次の6個は努力値の数値を0/252で切り替える
@@ -742,7 +743,7 @@ void CPokeDataDlg::OnChangeEditBase( CEdit &editCtrl, CString &editVal )
 }
 
 
-void CPokeDataDlg::OnChangeEdit()
+void CPokeDataDlg::OnChangeEditName()
 {
 	// TODO: これが RICHEDIT コントロールの場合、このコントロールが
 	// この通知を送信するには、CDialogEx::OnInitDialog() 関数をオーバーライドし、
@@ -750,7 +751,15 @@ void CPokeDataDlg::OnChangeEdit()
 	// OR 状態の ENM_CHANGE フラグをマスクに入れて呼び出す必要があります。
 
 	// TODO: ここにコントロール通知ハンドラー コードを追加してください。
-	OnChangeEditBase( m_editCtrl_Name, m_editValName );
+	OnChangeEditBase( m_editCtrl_Name, m_editValName ); // ダイアログ統一により関数化する必要はなくなったのだが…
+}
+
+void CPokeDataDlg::OnChangeEditLevel()
+{
+	UpdateData( TRUE );
+
+	// レベルを変更したらステータスを再計算する
+	OnPcdStatusRecalculate( 0, 0 );
 }
 
 void CPokeDataDlg::OnCbnSelchangeCombo()
