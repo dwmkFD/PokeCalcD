@@ -24,7 +24,7 @@ public:
 					// bit0: スナイパー、bit1: 色眼鏡、bit2: もふもふ(炎被弾)、bit3: フレンドガード、bit4: 氷の鱗粉、bit5: パンクロック(攻撃)
 					// bit6: パンクロック(防御)、bit7: ファントムガード、bit8: マルチスケイル、bit9: もふもふ(接触技)、bit10: ハードロック/フィルター
 					// bit11: プリズムアーマー
-	bool m_twice; // 特定条件下で威力2倍判定
+	bool m_twice; // 特定条件下で威力2倍判定 // -> これは攻撃技側にデータを持たせるべきだと思われる
 	int m_item; // アイテム補正
 				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
 				// bit10: 達人の帯、
@@ -92,6 +92,10 @@ public:
 		std::map<CString, std::vector<int>> result;
 		for ( auto &&atkmove : atk.m_move )
 		{
+			if ( ( m_moveDB[atkmove].m_category & 0x3 ) == 0 )
+			{
+				continue; // 変化技、あるいはデータベースに登録されていない技は処理しない
+			}
 			if ( result[atkmove].size() > 0 )
 			{
 				// この技のダメージは計算済みなのでスキップ
@@ -123,10 +127,6 @@ public:
 			long long Mhalf = 1, Mfilter = 1, MTwice = 1;
 
 			/* STEP1. A/Dを決定 */ // --> 要確認！！！　ランク補正ってここのA/Dを直接いじる？
-			if ( ( m_moveDB[atkmove].m_category & 0x3 ) == 0 )
-			{
-				continue; // 変化技、あるいはデータベースに登録されていない技は処理しない
-			}
 			if ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
 			{
 				// 物理技の時は、攻撃側の「攻撃」と防御側の「防御」を使う
@@ -149,10 +149,22 @@ public:
 			int power = m_moveDB[atkmove].m_power;
 			/* 以下、サイコフィールドでワイドフォースとか、ジャイロボールとか、そういうやつも計算する */
 			// ↓これも関数に入れた方が良い？？
-			if ( option.m_item & CBattleSettings::ITEM_LIFEORB )
+			if ( option.m_item & PokemonDataSub::ITEM_TYPE_ENHANCE )
 			{
 				// タイプ強化アイテムなら威力4915/4096倍
 				power *= 4915; power /= 4096;
+			}
+			if ( ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
+				 && ( option.m_item & PokemonDataSub::ITEM_MUSCLEBAND ) )
+			{
+				// 物理技でちからのハチマキを持っている時は威力4505/4096倍
+				power *= 4505; power /= 4096;
+			}
+			if ( ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK )
+				 && ( option.m_item & PokemonDataSub::ITEM_WISEGLASSES ) )
+			{
+				// 特殊技でものしりメガネを持っている時は威力4505/4096倍
+				power *= 4505; power /= 4096;
 			}
 
 			/* STEP2-2. A/Dにランク補正を入れるのはここ？ */
