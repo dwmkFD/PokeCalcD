@@ -12,6 +12,7 @@
 
 #include "CPokeDataDlg.h"
 #include "CComplDataDlg.h"
+#include "CDamageWindow.h"
 
 #include "util.hpp"
 #include "pokemon.hpp"

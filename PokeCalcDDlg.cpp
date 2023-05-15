@@ -14,6 +14,8 @@
 #include "pokemove.hpp"
 #include "damage.hpp"
 
+#include "CDamageWindow.h"
+
 #include <algorithm>
 
 #ifdef _DEBUG
