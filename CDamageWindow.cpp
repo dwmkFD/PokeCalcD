@@ -13,6 +13,12 @@ IMPLEMENT_DYNAMIC(CDamageWindow, CDialogEx)
 
 CDamageWindow::CDamageWindow(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DAMAGE_WINDOW, pParent)
+	, m_picType( 256 )
+	, m_strMove( 256 )
+	, m_picDamage( 256 )
+	, m_picRemain( 256 )
+	, m_picDamageRand( 256 )
+
 {
 
 }
@@ -30,6 +36,7 @@ void CDamageWindow::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CDamageWindow, CDialogEx)
 	ON_WM_VSCROLL()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 
@@ -61,6 +68,13 @@ BOOL CDamageWindow::OnInitDialog()
 		m_img.emplace_back( img ); // 画像のインデックスは定義しなきゃダメだと思う
 	}
 
+	// スクロールバーの初期設定
+	SCROLLINFO scrollinfo = { 0 };
+	scrollinfo.fMask = SIF_PAGE | SIF_RANGE;
+	m_scrollDamage.GetScrollInfo( &scrollinfo );
+	scrollinfo.nPage = 1;
+	m_scrollDamage.SetScrollInfo( &scrollinfo );
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 例外 : OCX プロパティ ページは必ず FALSE を返します。
 }
@@ -69,20 +83,37 @@ BOOL CDamageWindow::OnInitDialog()
 void CDamageWindow::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+	if ( nSBCode == SB_LINEUP || nSBCode == SB_LINEDOWN )
+	{
+		// スクロールバーの↑↓を押下された時
+		printDamage( nPos );
+	}
 
 	CDialogEx::OnVScroll( nSBCode, nPos, pScrollBar );
 }
 
-void CDamageWindow::printDamage( std::map<CString, std::vector<int>> damage )
-{
-	// 計算された技の個数分だけゲージを用意する
-	size_t sz = damage.size();
-	std::vector<CStatic> picType( sz );       // 技のタイプを示すアイコン
-	std::vector<CStatic> strMove( sz );       // 技名
-	std::vector<CStatic> picDamage( sz );     // ダメージゲージのベース部分（灰色？）
-	std::vector<CStatic> picRemain( sz );     // 残りHP部分（緑だったり黄色だったり赤だったり、確1なら無し）
-	std::vector<CStatic> picDamageRand( sz ); // ダメージの乱数でブレる部分(色は残りHP側に合わせた薄い色、確1なら無し)
 
+BOOL CDamageWindow::OnMouseWheel( UINT nFlags, short zDelta, CPoint pt )
+{
+	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+
+	return CDialogEx::OnMouseWheel( nFlags, zDelta, pt );
+}
+
+
+// ダメージ計算結果をsize個表示するためのスクロールバー設定
+void CDamageWindow::setScrollInfo( unsigned int size )
+{
+	SCROLLINFO scrollinfo = { 0 };
+	m_scrollDamage.GetScrollInfo( &scrollinfo );
+	scrollinfo.nMin = 0;
+	scrollinfo.nMax = size;	// ここの値は個数分で良いのか…？
+	m_scrollDamage.SetScrollInfo( &scrollinfo );
+}
+
+// ダメージが大きい順に計算結果を格納し直して描画を準備する
+void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage )
+{
 	// mapの時点でソートしておくのは難しそうだから、ここで一回詰め直したい
 	// →出力を、ダメージが大きい順にしてあげた方が良いよね、というお気持ち
 	std::vector<std::pair<CString, int>> tmpMoveName;
@@ -94,21 +125,45 @@ void CDamageWindow::printDamage( std::map<CString, std::vector<int>> damage )
 		[]( std::pair<CString, int> a, std::pair<CString, int> b ) {
 		return ( a.second > b.second );
 	} );
+	for ( auto &&it : tmpMoveName )
+	{
+		m_printData.emplace_back( std::make_pair( it.first, damage[it.first] ) );
+	}
+}
 
+void CDamageWindow::printDamage( UINT startPos )
+{
 	// この関数では、全ての技に対して描画準備をしておくが、実際は画面上には5つくらいだけ表示したい
 	// で、スクロールバーを上下に動かした時、nPosの前後2つずつくらいを出す、みたいにしたい
 	// →毎回、全部の技に対してゲージを描画すると遅くなりそうだから、まとめて読むのはここだけにしたいけど、言うほど気にしなくて良いか…？
 	// 　→ほとんどの場合は関係ないけど、全部の技を覚えるやつとかいるからなぁ…。
 
-	for ( int i = 0; i < sz; ++i )
+	// 計算された技の個数分だけゲージを用意する
+	size_t sz = m_printData.size();
+
+	for ( int i = min( startPos, sz - 5 ); i < min( startPos + 5, sz ); ++i )
 	{
-		auto dc = picDamage[i].GetDC();
+		auto dc = m_picDamage[i].GetDC(); // これもメンバ変数に保存か…？
 		int iWidth = 100;  // 幅
-		int iheight = 100; // 高さ、あとでちゃんと直す
+		int iHeight = 100; // 高さ、あとでちゃんと直す
 
 		CRect rect;
-		picDamage[i].MoveWindow( rect );
+		m_picDamage[i].MoveWindow( rect );
 
+		// 与えるダメージによってロードする画像を変えることになるはず
+
+		CDC bmpDC;
+		CBitmap *cbmp = CBitmap::FromHandle( m_img[i] ); // img[i]じゃなくてimg[画像のインデックス]って感じになると思う
+		bmpDC.CreateCompatibleDC( dc );
+		CBitmap *oldbmp = bmpDC.SelectObject( cbmp );
+
+		dc->SetStretchBltMode( STRETCH_HALFTONE );
+		dc->SetBrushOrg( 0, 0 );
+		dc->StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[i].GetWidth(), m_img[i].GetHeight(), SRCCOPY );
+		bmpDC.SelectObject( oldbmp );
+
+		cbmp->DeleteObject();
+		bmpDC.DeleteDC();
 		ReleaseDC( dc );
 	}
 }
