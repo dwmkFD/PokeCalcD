@@ -50,7 +50,9 @@ BOOL CDamageWindow::OnInitDialog()
 	// TODO: ここに初期化を追加してください
 	// 表示に必要な画像をロードする
 	std::vector<CString> picname = { // 残りのやつもロードするように書き換えるべし！
-//			_T( "pic\\flare.bmp" ), _T( "pic\\water.bmp" ), // タイプ表示画像はpngかjpgにしたい…
+			_T( "pic\\normal.bmp" ), _T( "pic\\flare.bmp" ), _T( "pic\\water.bmp" ), _T( "pic\\electric.bmp" ),
+			_T( "pic\\grass.bmp" ), _T( "pic\\ice.bmp" ), _T( "pic\\fighting.bmp" ), _T( "pic\\poison.bmp" ),
+
 			_T( "gray.bmp" ),
 			_T( "red.bmp" ), _T( "red_random.bmp" ),
 			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),

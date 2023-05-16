@@ -32,30 +32,53 @@ private:
 	std::vector<CImage> m_img; // 画像の個数は決まってるので決め打ちの方が良い？(全18タイプ、テラスタイプ、ゲージの色）
 
 	// 画像の種類分だけインデックスを定義
-	static constexpr unsigned int IMAGENAME_TYPE_FLARE = 0;
-	/*
-	static constexpr unsigned int IMAGENAME_TYPE_X = 1;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 2;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 3;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 4;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 5;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 6;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 7;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 8;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 9;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 10;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 11;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 12;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 13;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 14;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 15;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 16;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 17;
-	static constexpr unsigned int IMAGENAME_TYPE_X = 18;
-	*/
-	// テラスタイプの場合はちょっとだけ変えた画像も用意したい…
+	static constexpr unsigned int IMAGENAME_TYPE_NORMAL = 0;
+	static constexpr unsigned int IMAGENAME_TYPE_FLARE = 1;
+	static constexpr unsigned int IMAGENAME_TYPE_WATER = 2;
+	static constexpr unsigned int IMAGENAME_TYPE_ELECTRIC = 3;
+	static constexpr unsigned int IMAGENAME_TYPE_GRASS = 4;
+	static constexpr unsigned int IMAGENAME_TYPE_ICE = 5;
+	static constexpr unsigned int IMAGENAME_TYPE_FIGHTING = 6;
+	static constexpr unsigned int IMAGENAME_TYPE_POISON = 7;
+	static constexpr unsigned int IMAGENAME_TYPE_GROUND = 8;
+	static constexpr unsigned int IMAGENAME_TYPE_FLYING = 9;
+	static constexpr unsigned int IMAGENAME_TYPE_PSYCHIC = 10;
+	static constexpr unsigned int IMAGENAME_TYPE_BUG = 11;
+	static constexpr unsigned int IMAGENAME_TYPE_ROCK = 12;
+	static constexpr unsigned int IMAGENAME_TYPE_GHOST = 13;
+	static constexpr unsigned int IMAGENAME_TYPE_DRAGON = 14;
+	static constexpr unsigned int IMAGENAME_TYPE_DARK = 15;
+	static constexpr unsigned int IMAGENAME_TYPE_STEEL = 16;
+	static constexpr unsigned int IMAGENAME_TYPE_FAIRY = 17;
 
-	static constexpr unsigned int IMAGENAME_GAUGE_GRAY = 36; // テラスタイプも18種類あるので、続きから
+	// テラスタイプ用
+	static constexpr unsigned int IMAGENAME_TYPE_NORMAL_TERA = 18;
+	static constexpr unsigned int IMAGENAME_TYPE_FLARE_TERA = 19;
+	static constexpr unsigned int IMAGENAME_TYPE_WATER_TERA = 20;
+	static constexpr unsigned int IMAGENAME_TYPE_ELECTRIC_TERA = 21;
+	static constexpr unsigned int IMAGENAME_TYPE_GRASS_TERA = 22;
+	static constexpr unsigned int IMAGENAME_TYPE_ICE_TERA = 23;
+	static constexpr unsigned int IMAGENAME_TYPE_FIGHTING_TERA = 24;
+	static constexpr unsigned int IMAGENAME_TYPE_POISON_TERA = 25;
+	static constexpr unsigned int IMAGENAME_TYPE_GROUND_TERA = 26;
+	static constexpr unsigned int IMAGENAME_TYPE_FLYING_TERA = 27;
+	static constexpr unsigned int IMAGENAME_TYPE_PSYCHIC_TERA = 28;
+	static constexpr unsigned int IMAGENAME_TYPE_BUG_TERA = 29;
+	static constexpr unsigned int IMAGENAME_TYPE_ROCK_TERA = 30;
+	static constexpr unsigned int IMAGENAME_TYPE_GHOST_TERA = 31;
+	static constexpr unsigned int IMAGENAME_TYPE_DRAGON_TERA = 32;
+	static constexpr unsigned int IMAGENAME_TYPE_DARK_TERA = 33;
+	static constexpr unsigned int IMAGENAME_TYPE_STEEL_TERA = 34;
+	static constexpr unsigned int IMAGENAME_TYPE_FAIRY_TERA = 35;
+
+	// ゲージの色
+	static constexpr unsigned int IMAGENAME_GAUGE_GRAY = 36;
+	static constexpr unsigned int IMAGENAME_GAUGE_RED = 37;
+	static constexpr unsigned int IMAGENAME_GAUGE_RED_RANDOM = 38;
+	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW = 39;
+	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW_RANDOM = 40;
+	static constexpr unsigned int IMAGENAME_GAUGE_GREEN = 41;
+	static constexpr unsigned int IMAGENAME_GAUGE_GREEN_RANDOM = 42;
 
 	std::vector<std::pair<CString, std::vector<int>>> m_printData; // 描画する計算結果
 	std::vector<CStatic> m_picType;       // 技のタイプを示すアイコン
