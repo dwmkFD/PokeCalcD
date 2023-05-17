@@ -50,8 +50,17 @@ BOOL CDamageWindow::OnInitDialog()
 	// TODO: ここに初期化を追加してください
 	// 表示に必要な画像をロードする
 	std::vector<CString> picname = { // 残りのやつもロードするように書き換えるべし！
-			_T( "pic\\normal.bmp" ), _T( "pic\\flare.bmp" ), _T( "pic\\water.bmp" ), _T( "pic\\electric.bmp" ),
-			_T( "pic\\grass.bmp" ), _T( "pic\\ice.bmp" ), _T( "pic\\fighting.bmp" ), _T( "pic\\poison.bmp" ),
+			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
+			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
+			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
+			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
+			_T( "steel.bmp" ), _T( "fairy.bmp" ),
+
+			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
+			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
+			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
+			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
+			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
 
 			_T( "gray.bmp" ),
 			_T( "red.bmp" ), _T( "red_random.bmp" ),
@@ -118,6 +127,7 @@ void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage )
 {
 	// mapの時点でソートしておくのは難しそうだから、ここで一回詰め直したい
 	// →出力を、ダメージが大きい順にしてあげた方が良いよね、というお気持ち
+	// もしこっちのダイアログでダメージ計算するなら、この処理も表示処理の方に移動させるべし
 	std::vector<std::pair<CString, int>> tmpMoveName;
 	for ( auto &&it : damage )
 	{
@@ -145,14 +155,27 @@ void CDamageWindow::printDamage( UINT startPos )
 
 	for ( int i = min( startPos, sz - 5 ); i < min( startPos + 5, sz ); ++i )
 	{
+		CRecordset rs( m_database );
+		CString strSQL;
+		strSQL.Format( _T( "select タイプ from move where 技名='%s'" ), m_printData[i].first ); // 技データベースの検索
+		CString strType;
+		rs.GetFieldValue( (short)0, strType ); // select文で1つしか指定しない時はインデックスは0で良い？？(要確認)
+
+		// タイプ名称を数値(インデックス)に変換するテーブルを、pokemove.hppからutil.hppに移動した方が良い説
+		// -> もしくは、poketype.hpp を新しく作ってそこに定義するとか…そっちの方が良いかな…
+
 		auto dc = m_picDamage[i].GetDC(); // これもメンバ変数に保存か…？
-		int iWidth = 100;  // 幅
-		int iHeight = 100; // 高さ、あとでちゃんと直す
+		int iWidth = 250;  // 幅、あとでちゃんと直す
+		int iHeight = 10; // 高さ、あとでちゃんと直す
 
 		CRect rect;
 		m_picDamage[i].MoveWindow( rect );
 
 		// 与えるダメージによってロードする画像を変えることになるはず
+		// 今更だけど、ゲージを表示するにはポケモンのHP実数値が必要なんだから、本体のダイアログじゃなくて
+		// ここで計算するべきなのでは…？(でもオプションのチェックボックスを拾うのが面倒になるか…)
+		// -> でも表示更新＝再計算なんだし、それでも良い気がしないでもない…
+		// 引数にPokemonDataを2つもらうしかないか…それも何か違う気がするが……
 
 		CDC bmpDC;
 		CBitmap *cbmp = CBitmap::FromHandle( m_img[i] ); // img[i]じゃなくてimg[画像のインデックス]って感じになると思う
