@@ -49,7 +49,7 @@ BOOL CDamageWindow::OnInitDialog()
 
 	// TODO: ここに初期化を追加してください
 	// 表示に必要な画像をロードする
-	std::vector<CString> picname = { // 残りのやつもロードするように書き換えるべし！
+	std::vector<CString> picname = {
 			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
 			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
 			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
@@ -76,7 +76,7 @@ BOOL CDamageWindow::OnInitDialog()
 		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
 
 		auto ret = img.Load( strPath );
-		m_img.emplace_back( img ); // 画像のインデックスは定義しなきゃダメだと思う
+		m_img.emplace_back( img );
 	}
 
 	// スクロールバーの初期設定
@@ -123,7 +123,7 @@ void CDamageWindow::setScrollInfo( unsigned int size )
 }
 
 // ダメージが大きい順に計算結果を格納し直して描画を準備する
-void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage )
+void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage, int defHP )
 {
 	// mapの時点でソートしておくのは難しそうだから、ここで一回詰め直したい
 	// →出力を、ダメージが大きい順にしてあげた方が良いよね、というお気持ち
@@ -145,6 +145,10 @@ void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage )
 
 void CDamageWindow::printDamage( UINT startPos )
 {
+	// タイプ名称テーブルを取得
+	PokeType pt;
+	auto typetable = pt.getTypeTable();
+
 	// この関数では、全ての技に対して描画準備をしておくが、実際は画面上には5つくらいだけ表示したい
 	// で、スクロールバーを上下に動かした時、nPosの前後2つずつくらいを出す、みたいにしたい
 	// →毎回、全部の技に対してゲージを描画すると遅くなりそうだから、まとめて読むのはここだけにしたいけど、言うほど気にしなくて良いか…？
@@ -175,7 +179,7 @@ void CDamageWindow::printDamage( UINT startPos )
 		// 今更だけど、ゲージを表示するにはポケモンのHP実数値が必要なんだから、本体のダイアログじゃなくて
 		// ここで計算するべきなのでは…？(でもオプションのチェックボックスを拾うのが面倒になるか…)
 		// -> でも表示更新＝再計算なんだし、それでも良い気がしないでもない…
-		// 引数にPokemonDataを2つもらうしかないか…それも何か違う気がするが……
+		// 引数にPokemonDataをもらうしかないか…それも何か違う気がするが……
 
 		CDC bmpDC;
 		CBitmap *cbmp = CBitmap::FromHandle( m_img[i] ); // img[i]じゃなくてimg[画像のインデックス]って感じになると思う

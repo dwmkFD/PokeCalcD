@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 
+#include "poketype.hpp"
+
 /* ポケモンのデータ定義 */
 
 // 持ち物や特性に関するデータ
