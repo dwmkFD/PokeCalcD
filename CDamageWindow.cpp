@@ -145,19 +145,19 @@ void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage, 
 
 void CDamageWindow::printDamage( UINT startPos )
 {
-	// タイプ名称テーブルを取得
-	PokeType pt;
-	auto typetable = pt.getTypeTable();
-
 	// この関数では、全ての技に対して描画準備をしておくが、実際は画面上には5つくらいだけ表示したい
 	// で、スクロールバーを上下に動かした時、nPosの前後2つずつくらいを出す、みたいにしたい
 	// →毎回、全部の技に対してゲージを描画すると遅くなりそうだから、まとめて読むのはここだけにしたいけど、言うほど気にしなくて良いか…？
 	// 　→ほとんどの場合は関係ないけど、全部の技を覚えるやつとかいるからなぁ…。
 
+	// タイプ名称テーブルを取得
+	PokeType pt;
+	auto typetable = pt.getTypeTable();
+
 	// 計算された技の個数分だけゲージを用意する
 	size_t sz = m_printData.size();
 
-	for ( int i = min( startPos, sz - 5 ); i < min( startPos + 5, sz ); ++i )
+	for ( int i = min( startPos, sz - 5 ), j = 0; i < min( startPos + 5, sz ); ++i )
 	{
 		CRecordset rs( m_database );
 		CString strSQL;
@@ -165,24 +165,17 @@ void CDamageWindow::printDamage( UINT startPos )
 		CString strType;
 		rs.GetFieldValue( (short)0, strType ); // select文で1つしか指定しない時はインデックスは0で良い？？(要確認)
 
-		// タイプ名称を数値(インデックス)に変換するテーブルを、pokemove.hppからutil.hppに移動した方が良い説
-		// -> もしくは、poketype.hpp を新しく作ってそこに定義するとか…そっちの方が良いかな…
-
-		auto dc = m_picDamage[i].GetDC(); // これもメンバ変数に保存か…？
-		int iWidth = 250;  // 幅、あとでちゃんと直す
-		int iHeight = 10; // 高さ、あとでちゃんと直す
+		/* 技のタイプアイコンを表示 */
+		auto dc = m_picType[i].GetDC(); // これもメンバ変数に保存か…？
+		int iWidth = 20;  // 幅、あとでちゃんと直す
+		int iHeight = 20; // 高さ、あとでちゃんと直す
 
 		CRect rect;
-		m_picDamage[i].MoveWindow( rect );
-
-		// 与えるダメージによってロードする画像を変えることになるはず
-		// 今更だけど、ゲージを表示するにはポケモンのHP実数値が必要なんだから、本体のダイアログじゃなくて
-		// ここで計算するべきなのでは…？(でもオプションのチェックボックスを拾うのが面倒になるか…)
-		// -> でも表示更新＝再計算なんだし、それでも良い気がしないでもない…
-		// 引数にPokemonDataをもらうしかないか…それも何か違う気がするが……
+		rect.SetRect( 10, 10 + j * 20, 20, 25 + j * 20 ); // 座標は表示を見ながら後で直す
+		m_picType[i].MoveWindow( rect );
 
 		CDC bmpDC;
-		CBitmap *cbmp = CBitmap::FromHandle( m_img[i] ); // img[i]じゃなくてimg[画像のインデックス]って感じになると思う
+		CBitmap *cbmp = CBitmap::FromHandle( m_img[typetable[strType]] );
 		bmpDC.CreateCompatibleDC( dc );
 		CBitmap *oldbmp = bmpDC.SelectObject( cbmp );
 
@@ -191,6 +184,79 @@ void CDamageWindow::printDamage( UINT startPos )
 		dc->StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[i].GetWidth(), m_img[i].GetHeight(), SRCCOPY );
 		bmpDC.SelectObject( oldbmp );
 
+		cbmp->DeleteObject();
+		bmpDC.DeleteDC();
+		ReleaseDC( dc );
+
+		/* 技名のテキストを表示 */
+		iWidth = 230;
+		iHeight = 20;
+		rect.SetRect( 35, 10 + j * 20, 270, 25 + j * 20 );
+		m_strMove[i].MoveWindow( rect );
+		m_strMove[i].SetWindowText( m_printData[i].first );
+
+		/* ダメージゲージのベース部分を表示 */
+		dc = m_picDamage[i].GetDC(); // デバイスコンテキストのオブジェクトってReleaseしたりDeleteすれば使い回して良いのかな…？
+		iWidth = 250;
+		iHeight = 20;
+		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		cbmp = CBitmap::FromHandle( m_img[IMAGENAME_GAUGE_GRAY] );
+		bmpDC.CreateCompatibleDC( dc );
+		oldbmp = bmpDC.SelectObject( cbmp );
+		dc->SetStretchBltMode( STRETCH_HALFTONE );
+		dc->SetBrushOrg( 0, 0 );
+		dc->StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
+		bmpDC.SelectObject( oldbmp );
+		cbmp->DeleteObject();
+		bmpDC.DeleteDC();
+		ReleaseDC( dc );
+
+		/* ダメージゲージの乱数幅部分を表示 */ // -> ゲージの色はWikiを見て確認！！
+		// 乱数幅の方から描画して上から残りHP部分で上書きした方が楽だよね
+		UINT imgIndex = 0;
+		if ( m_defHP * 0.4 >= m_printData[i].second[15] )
+		{
+			// ダメージ40％以下の場合は緑ゲージ
+			imgIndex = IMAGENAME_GAUGE_GREEN;
+		}
+		else if ( m_defHP * 0.75 >= m_printData[i].second[15] )
+		{
+			// ダメージ75％以下の場合は黄色ゲージ
+			imgIndex = IMAGENAME_GAUGE_YELLOW;
+		}
+		else
+		{
+			// ダメージが75％を超えたら赤ゲージ
+			imgIndex = IMAGENAME_GAUGE_RED;
+		}
+
+		dc = m_picDamage[i].GetDC();
+		iWidth = 250 * ( max( m_defHP - m_printData[i].second[0], 0 ) / (double)m_defHP ); // 表示する長さは残りHPによって変わるはず
+		iHeight = 20;
+		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		cbmp = CBitmap::FromHandle( m_img[imgIndex + 1] );
+		bmpDC.CreateCompatibleDC( dc );
+		oldbmp = bmpDC.SelectObject( cbmp );
+		dc->SetStretchBltMode( STRETCH_HALFTONE );
+		dc->SetBrushOrg( 0, 0 );
+		dc->StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
+		bmpDC.SelectObject( oldbmp );
+		cbmp->DeleteObject();
+		bmpDC.DeleteDC();
+		ReleaseDC( dc );
+
+		/* ダメージゲージの残りHP部分を表示 */
+		dc = m_picDamage[i].GetDC();
+		iWidth = 250 * ( max( m_defHP - m_printData[i].second[15], 0 ) / (double)m_defHP ); // 確定で残る量を算出するので最大ダメージでゲージ量を計算
+		iHeight = 20;
+		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		cbmp = CBitmap::FromHandle( m_img[imgIndex] );
+		bmpDC.CreateCompatibleDC( dc );
+		oldbmp = bmpDC.SelectObject( cbmp );
+		dc->SetStretchBltMode( STRETCH_HALFTONE );
+		dc->SetBrushOrg( 0, 0 );
+		dc->StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
+		bmpDC.SelectObject( oldbmp );
 		cbmp->DeleteObject();
 		bmpDC.DeleteDC();
 		ReleaseDC( dc );
