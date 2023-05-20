@@ -43,6 +43,7 @@ private:
 
 	int m_defHP; // ダメージを与える相手の最大HP実数値
 	std::vector<std::pair<CString, std::vector<int>>> m_printData; // 描画する計算結果
+	// ↓これ要らなさそう
 	std::vector<CStatic> m_picType;       // 技のタイプを示すアイコン
 	std::vector<CStatic> m_strMove;       // 技名
 	std::vector<CStatic> m_picDamage;     // ダメージゲージのベース部分（灰色固定？）
@@ -62,4 +63,5 @@ public:
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 	virtual BOOL OnInitDialog();
 	afx_msg BOOL OnMouseWheel( UINT nFlags, short zDelta, CPoint pt );
+	afx_msg void OnPaint();
 };

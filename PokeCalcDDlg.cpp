@@ -148,6 +148,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	CString strConnection = _T( "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=.\\PokeData.accdb;UID=;Pwd=" );
 	m_database.OpenEx( strConnection, CDatabase::openReadOnly | CDatabase::noOdbcDialog );
 
+	// ポケモン設定ダイアログ初期化
 	m_dlgPokeData[0].Create( IDD_POKEMON_DIALOG1, this ); // ポケモン1
 	m_dlgPokeData[1].Create( IDD_POKEMON_DIALOG1, this ); // ポケモン2
 
@@ -171,6 +172,30 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 		m_dlgPokeData[i].ShowWindow( SW_SHOW );
 		m_dlgPokeData[i].setDatabase( &m_database );
 		m_dlgPokeData[i].setID( i );
+	}
+
+	// ダメージ表示ダイアログ初期化
+	m_dlgDamageWindow[0].Create( IDD_DAMAGE_WINDOW, this );
+	m_dlgDamageWindow[1].Create( IDD_DAMAGE_WINDOW, this );
+
+	GetDlgItem( IDC_STATIC_GROUP_DAMAGE1TO2 )->GetWindowRect( rect );
+	rect.left -= 7;
+	rect.top -= 20;
+	rect.right -= 15;
+	rect.bottom -= 30;
+	m_dlgDamageWindow[0].MoveWindow( rect );
+
+	GetDlgItem( IDC_STATIC_GROUP_DAMAGE2TO1 )->GetWindowRect( rect );
+	rect.left -= 7;
+	rect.top -= 20;
+	rect.right -= 15;
+	rect.bottom -= 30;
+	m_dlgDamageWindow[1].MoveWindow( rect );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		m_dlgDamageWindow[i].ShowWindow( SW_SHOW );
+		m_dlgDamageWindow[i].setDatabase( &m_database );
 	}
 
 	// ダメージ計算クラス初期化
@@ -308,7 +333,19 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 
 	// チェックボックス等を見てオプションを設定する
 
-	auto damage_result = m_damage->calc( pokemon1, pokemon2, option );
+	auto damage_result1 = m_damage->calc( pokemon1, pokemon2, option );
+	auto damage_result2 = m_damage->calc( pokemon2, pokemon1, option );
+
+	m_dlgDamageWindow[0].setDamageInfo( damage_result1, pokemon2.m_status[PokemonData::HP_Index] );
+	m_dlgDamageWindow[1].setDamageInfo( damage_result2, pokemon1.m_status[PokemonData::HP_Index] );
+
+//	m_dlgDamageWindow[0].printDamage( 0 );
+//	m_dlgDamageWindow[1].printDamage( 0 );
+
+	CRect rect;
+	GetClientRect( &rect );
+	InvalidateRect( &rect );
+	UpdateWindow();
 
 	return ( 0 );
 }

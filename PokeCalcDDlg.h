@@ -37,7 +37,8 @@ public:
 
 private:
 	std::unique_ptr<CCalcDamage> m_damage; // ダメージ計算
-	CPokeDataDlg m_dlgPokeData[2];
+	CPokeDataDlg m_dlgPokeData[2]; // ポケモンに関する設定ダイアログ
+	CDamageWindow m_dlgDamageWindow[2]; // 計算結果表示ダイアログ
 
 protected:
 	CDatabase m_database; // データベース
