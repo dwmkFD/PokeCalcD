@@ -73,6 +73,7 @@ public:
 // ポケモンのデータ
 class PokemonData {
 public:
+	CString m_name; // 名前
 	int m_Level; // レベル
 
 	// HABCDS

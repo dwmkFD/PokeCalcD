@@ -434,6 +434,9 @@ void CPokeDataDlg::AllCalcStatus()
 			_tcstol( m_editStatus[12 + PokemonData::Speed_Index], nullptr, 10 ),
 		};
 
+		// 名前を保存する
+		m_pokemon.m_name = m_editValName;
+
 		// Lvを保存する
 		m_pokemon.m_Level = lv;
 

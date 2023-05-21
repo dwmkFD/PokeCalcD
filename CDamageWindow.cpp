@@ -185,9 +185,9 @@ void CDamageWindow::OnPaint()
 
 	// bitmap
 	CDC bmpDC;
-	CBitmap *cbmp = nullptr;
-	CBitmap *oldbmp = nullptr;
-	bmpDC.CreateCompatibleDC( &dc );
+	auto ret = bmpDC.CreateCompatibleDC( &dc );
+	CBitmap *cbmp = CBitmap::FromHandle( m_img[0] ); // 仮の画像をロードする
+	CBitmap *oldbmp = bmpDC.SelectObject( cbmp );
 
 	for ( int i = min( m_scrollDamage.GetScrollPos(), sz - 5 ), j = 0; i < min( m_scrollDamage.GetScrollPos() + 5, sz ); ++i, ++j )
 	{
@@ -203,21 +203,17 @@ void CDamageWindow::OnPaint()
 		int iHeight = 20; // 高さ、あとでちゃんと直す
 
 		cbmp = CBitmap::FromHandle( m_img[typetable[strType]] );
-		if ( oldbmp == nullptr )
-		{
-			oldbmp = bmpDC.SelectObject( cbmp );
-		}
-
+		bmpDC.SelectObject( cbmp );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 //		dc.SetBrushOrg( 0, 0 );
-		dc.StretchBlt( 10, 10 + j * 20, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 10, 10 + j * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
 		cbmp->DeleteObject();
 
 		/* 技名のテキストを表示 */
 		iWidth = 230;
-		iHeight = 18;
+		iHeight = 16;
 		CRect rect;
-		rect.SetRect( 35, 10 + j * 20, 270, 25 + j * 40 );
+		rect.SetRect( 35, 10 + j * 20, iWidth, 26 + j * 20 );
 		dc.DrawText( m_printData[i].first, rect, 0 );
 
 		/* ダメージゲージのベース部分を表示 */
@@ -274,6 +270,4 @@ void CDamageWindow::OnPaint()
 
 	bmpDC.SelectObject( oldbmp );
 	bmpDC.DeleteDC();
-
-	UpdateWindow();
 }

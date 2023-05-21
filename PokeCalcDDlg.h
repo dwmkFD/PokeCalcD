@@ -40,8 +40,26 @@ private:
 	CPokeDataDlg m_dlgPokeData[2]; // ポケモンに関する設定ダイアログ
 	CDamageWindow m_dlgDamageWindow[2]; // 計算結果表示ダイアログ
 
+#if 0
+	std::vector<std::pair<CString, std::vector<int>>> m_printData[2]; // 描画する計算結果
+	int m_defHP[2]; // 攻撃を受ける側のHP実数値
+
+	// ゲージの色
+	static constexpr unsigned int IMAGENAME_GAUGE_GRAY = 36;
+	static constexpr unsigned int IMAGENAME_GAUGE_RED = 37;
+	static constexpr unsigned int IMAGENAME_GAUGE_RED_RANDOM = 38;
+	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW = 39;
+	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW_RANDOM = 40;
+	static constexpr unsigned int IMAGENAME_GAUGE_GREEN = 41;
+	static constexpr unsigned int IMAGENAME_GAUGE_GREEN_RANDOM = 42;
+
+	//計算結果を表示する箇所のスクロールバー
+	CScrollBar m_scrPokemon[2];
+#endif
+
 protected:
 	CDatabase m_database; // データベース
+	std::vector<CImage> m_img; // 画像の個数は決まってるので決め打ちの方が良い？(全18タイプ、テラスタイプ、ゲージの色）
 
 protected:
 	int m_radioBattle;	// シングル or ダブル
@@ -49,7 +67,6 @@ protected:
 	int m_radioField;	// フィールド
 
 	// 処理を統一するために、vectorかmapにしてindexを対応させた方がいいと思う
-	// あと、これ全部2セット要るんだよね。。
 	BOOL m_checkGravity;		// 重力
 	BOOL m_checkWonderRoom;		// ワンダールーム
 	BOOL m_checkPlasmaShower;	// プラズマシャワー
@@ -81,6 +98,7 @@ public:
 	CDatabase *getDatabase() { return ( &m_database ); } // 子ダイアログでデータベースを参照する時用
 	afx_msg void OnBnClickedRadioBase( UINT id );
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
+	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 protected:
 	afx_msg LRESULT OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam );
 	afx_msg LRESULT OnPcdAddNameChar( WPARAM wParam, LPARAM lParam );
