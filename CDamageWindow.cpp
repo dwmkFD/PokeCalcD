@@ -13,11 +13,6 @@ IMPLEMENT_DYNAMIC(CDamageWindow, CDialogEx)
 
 CDamageWindow::CDamageWindow(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DAMAGE_WINDOW, pParent)
-	, m_picType( 256 )
-	, m_strMove( 256 )
-	, m_picDamage( 256 )
-	, m_picRemain( 256 )
-	, m_picDamageRand( 256 )
 {
 }
 
@@ -48,46 +43,6 @@ BOOL CDamageWindow::OnInitDialog()
 
 	// TODO: ここに初期化を追加してください
 	// 表示に必要なコントロールを初期化する
-	CRect rect( 0, 0, 0, 0 );
-	for ( int i = 0; i < 256; ++i )
-	{
-		m_picType[i].Create( _T( "" ), 0, rect, this );
-		m_strMove[i].Create( _T( "" ), 0, rect, this );
-		m_picDamage[i].Create( _T( "" ), 0, rect, this );
-		m_picRemain[i].Create( _T( "" ), 0, rect, this );
-		m_picDamageRand[i].Create( _T( "" ), 0, rect, this );
-	}
-
-	// 表示に必要な画像をロードする
-	std::vector<CString> picname = {
-			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
-			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
-			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
-			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
-			_T( "steel.bmp" ), _T( "fairy.bmp" ),
-
-			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
-			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
-			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
-			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
-			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
-
-			_T( "gray.bmp" ),
-			_T( "red.bmp" ), _T( "red_random.bmp" ),
-			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
-			_T( "green.bmp" ), _T( "green_random.bmp" ),
-	};
-	CString strPath;
-	TCHAR buf[2048] = { 0 };
-	GetCurrentDirectory( sizeof( buf ), buf );
-	for ( auto &&filename : picname )
-	{
-		CImage img;
-		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
-
-		auto ret = img.Load( strPath );
-		m_img.emplace_back( img );
-	}
 
 	// スクロールバーの初期設定
 	SCROLLINFO scrollinfo = { 0 };
@@ -171,10 +126,6 @@ void CDamageWindow::OnPaint()
 	// →毎回、全部の技に対してゲージを描画すると遅くなりそうだから、まとめて読むのはここだけにしたいけど、言うほど気にしなくて良いか…？
 	// 　→ほとんどの場合は関係ないけど、全部の技を覚えるやつとかいるからなぁ…。
 
-	// タイプ名称テーブルを取得
-	PokeType pt;
-	auto typetable = pt.getTypeTable();
-
 	// 計算された技の個数分だけゲージを用意する
 	size_t sz = m_printData.size();
 
@@ -182,6 +133,51 @@ void CDamageWindow::OnPaint()
 	{
 		return;
 	}
+
+	// タイプ名称テーブルを取得
+	PokeType pt;
+	auto typetable = pt.getTypeTable();
+
+	// 表示に必要な画像をロードする
+	std::vector<CString> picname = {
+			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
+			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
+			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
+			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
+			_T( "steel.bmp" ), _T( "fairy.bmp" ),
+
+			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
+			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
+			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
+			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
+			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
+
+			_T( "gray.bmp" ),
+			_T( "red.bmp" ), _T( "red_random.bmp" ),
+			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
+			_T( "green.bmp" ), _T( "green_random.bmp" ),
+	};
+	CString strPath;
+	TCHAR buf[2048] = { 0 };
+	GetCurrentDirectory( sizeof( buf ), buf );
+	CImage m_img[64];
+#if 0
+	for ( auto &&filename : picname )
+	{
+		CImage img;
+		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
+
+		auto ret = img.Load( strPath );
+		m_img.emplace_back( img );
+	}
+#else
+	for ( int i = 0; i < picname.size(); ++i )
+	{
+		strPath.Format( _T( "%s\\pic\\%s" ), buf, picname[i] );
+		m_img[i].Load( strPath ); // -> CImage をOnInitDialogで初期化するのは無理みたい…？これに何時間かかったか………。
+		// と言うか、これが原因ならもともとの予定だった同じウィンドウに子ダイアログくっつけて描画するやつイケるんじゃないの…？
+	}
+#endif
 
 	// bitmap
 	CDC bmpDC;

@@ -30,7 +30,7 @@ public:
 
 private:
 	CDatabase *m_database;
-	std::vector<CImage> m_img; // 画像の個数は決まってるので決め打ちの方が良い？(全18タイプ、テラスタイプ、ゲージの色）
+	std::vector<CImage> m_imgggg; // 画像の個数は決まってるので決め打ちの方が良い？(全18タイプ、テラスタイプ、ゲージの色）
 
 	// ゲージの色
 	static constexpr unsigned int IMAGENAME_GAUGE_GRAY = 36;
@@ -43,12 +43,6 @@ private:
 
 	int m_defHP; // ダメージを与える相手の最大HP実数値
 	std::vector<std::pair<CString, std::vector<int>>> m_printData; // 描画する計算結果
-	// ↓これ要らなさそう
-	std::vector<CStatic> m_picType;       // 技のタイプを示すアイコン
-	std::vector<CStatic> m_strMove;       // 技名
-	std::vector<CStatic> m_picDamage;     // ダメージゲージのベース部分（灰色固定？）
-	std::vector<CStatic> m_picRemain;     // 残りHP部分（緑だったり黄色だったり赤だったり、確1なら無し）
-	std::vector<CStatic> m_picDamageRand; // ダメージの乱数でブレる部分(色は残りHP側に合わせた薄い色、確1なら無し)
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV サポート
 

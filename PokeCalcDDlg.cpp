@@ -182,6 +182,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	m_dlgDamageWindow[0].Create( IDD_DAMAGE_WINDOW, this );
 	m_dlgDamageWindow[1].Create( IDD_DAMAGE_WINDOW, this );
 
+#if 0 // ポップアップに変更（描画がうまくできないから妥協）
 	// ダメージ表示部分にダイアログを貼り付ける
 	CRect rect;
 	rect.left = rect1.right + 5;
@@ -192,6 +193,7 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	rect.top = rect.bottom + 10;
 	rect.bottom = rect1.bottom;
 	m_dlgDamageWindow[1].MoveWindow( rect );
+#endif
 
 	for ( int i = 0; i < 2; ++i )
 	{
@@ -434,9 +436,9 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	m_dlgDamageWindow[1].setDamageInfo( damage_result2, pokemon1.m_status[PokemonData::HP_Index] );
 
 	CRect rect;
-	GetClientRect( &rect );
-	InvalidateRect( &rect );
-	UpdateWindow();
+	m_dlgDamageWindow[0].GetWindowRect( &rect );
+	m_dlgDamageWindow[0].ShowWindow( SW_SHOW );
+	m_dlgDamageWindow[0].InvalidateRect( rect );
 
 	return ( 0 );
 }
