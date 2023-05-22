@@ -43,6 +43,7 @@ private:
 
 	int m_defHP; // ダメージを与える相手の最大HP実数値
 	std::vector<std::pair<CString, std::vector<int>>> m_printData; // 描画する計算結果
+	std::vector<CImage> m_img; // 表示する画像
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV サポート
 

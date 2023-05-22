@@ -161,14 +161,14 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	rect1.left -= 7;
 	rect1.top -= 10;
 	rect1.right -= 15;
-	rect1.bottom -= 15;
+	rect1.bottom -= 35;
 	m_dlgPokeData[0].MoveWindow( rect1 );
 
 	GetDlgItem( IDC_STATIC_GROUP_POKEMON2 )->GetWindowRect( rect2 );
 	rect2.left -= 7;
 	rect2.top -= 10;
 	rect2.right -= 15;
-	rect2.bottom -= 15;
+	rect2.bottom -= 35;
 	m_dlgPokeData[1].MoveWindow( rect2 );
 
 	for ( int i = 0; i < 2; ++i )
@@ -182,62 +182,29 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 	m_dlgDamageWindow[0].Create( IDD_DAMAGE_WINDOW, this );
 	m_dlgDamageWindow[1].Create( IDD_DAMAGE_WINDOW, this );
 
-#if 0 // ポップアップに変更（描画がうまくできないから妥協）
 	// ダメージ表示部分にダイアログを貼り付ける
 	CRect rect;
-	rect.left = rect1.right + 5;
-	rect.top = rect1.top;
-	rect.right = rect2.left - 5;
-	rect.bottom = rect1.bottom / 2 - 5;
+	rect.left = rect1.left;
+	rect.top = rect1.bottom + 5;
+	rect.right = rect1.right;
+	rect.bottom = rect1.bottom + 250;
 	m_dlgDamageWindow[0].MoveWindow( rect );
-	rect.top = rect.bottom + 10;
-	rect.bottom = rect1.bottom;
+	rect.left = rect2.left;
+	rect.top = rect2.bottom + 5;
+	rect.right = rect2.right;
+	rect.bottom = rect2.bottom + 250;
 	m_dlgDamageWindow[1].MoveWindow( rect );
-#endif
 
 	for ( int i = 0; i < 2; ++i )
 	{
 		// ダイアログの代わりにStaticControlを貼り付けて、そこに描画したらいける…？ -> ダメっぽい。。
 		// -> 子ダイアログにするのやめて、普通にポップアップ表示しちゃうか…？
-//		m_dlgDamageWindow[i].ShowWindow( SW_SHOW );
+		m_dlgDamageWindow[i].ShowWindow( SW_SHOW );
 		m_dlgDamageWindow[i].setDatabase( &m_database );
 	}
 
 	// ダメージ計算クラス初期化
 	m_damage.reset( new CCalcDamage( &m_database ) );
-
-#if 0
-	// 表示に必要な画像をロードする
-	std::vector<CString> picname = {
-			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
-			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
-			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
-			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
-			_T( "steel.bmp" ), _T( "fairy.bmp" ),
-
-			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
-			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
-			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
-			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
-			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
-
-			_T( "gray.bmp" ),
-			_T( "red.bmp" ), _T( "red_random.bmp" ),
-			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
-			_T( "green.bmp" ), _T( "green_random.bmp" ),
-	};
-	CString strPath;
-	TCHAR buf[2048] = { 0 };
-	GetCurrentDirectory( sizeof( buf ), buf );
-	for ( auto &&filename : picname )
-	{
-		CImage img;
-		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
-
-		auto ret = img.Load( strPath );
-		m_img.emplace_back( img );
-	}
-#endif
 
 	// ポケモン1側のポケモン名を入力するエディットボックスにフォーカスを合わせる
 	m_dlgPokeData[0].GetDlgItem( IDC_EDIT1 )->SetFocus();
@@ -412,33 +379,14 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	GetDlgItem( IDC_STATIC_GROUP_DAMAGE2TO1 )->SetWindowTextW( strBuffer );
 #endif
 
-#if 0
-	auto pack = [this]( std::map<CString, std::vector<int>> &damage, int defHP, int index ) {
-		std::vector<std::pair<CString, int>> tmpMoveName;
-		for ( auto &&it : damage )
-		{
-			tmpMoveName.emplace_back( std::make_pair( it.first, it.second[15] ) ); // 急所に当たらなかった場合の一番ダメージが大きい結果を元にソートしたい
-		}
-		sort( tmpMoveName.begin(), tmpMoveName.end(),
-			  []( std::pair<CString, int> a, std::pair<CString, int> b ) {
-			return ( a.second > b.second );
-		} );
-		for ( auto &&it : tmpMoveName )
-		{
-			m_printData[index].emplace_back( std::make_pair( it.first, damage[it.first] ) );
-		}
-		m_defHP[index] = defHP;
-	};
-	pack( damage_result1, pokemon2.m_status[PokemonData::HP_Index], 0 );
-	pack( damage_result2, pokemon1.m_status[PokemonData::HP_Index], 1 );
-#endif
 	m_dlgDamageWindow[0].setDamageInfo( damage_result1, pokemon2.m_status[PokemonData::HP_Index] );
 	m_dlgDamageWindow[1].setDamageInfo( damage_result2, pokemon1.m_status[PokemonData::HP_Index] );
 
 	CRect rect;
-	m_dlgDamageWindow[0].GetWindowRect( &rect );
-	m_dlgDamageWindow[0].ShowWindow( SW_SHOW );
-	m_dlgDamageWindow[0].InvalidateRect( rect );
+	GetClientRect( &rect );
+	InvalidateRect( rect );
+//	m_dlgDamageWindow[0].GetWindowRect( &rect );
+//	m_dlgDamageWindow[0].InvalidateRect( rect );
 
 	return ( 0 );
 }

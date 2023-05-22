@@ -12,7 +12,8 @@
 IMPLEMENT_DYNAMIC(CDamageWindow, CDialogEx)
 
 CDamageWindow::CDamageWindow(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_DAMAGE_WINDOW, pParent)
+	: CDialogEx(IDD_DAMAGE_WINDOW, pParent),
+	m_img( 64 )
 {
 }
 
@@ -23,7 +24,7 @@ CDamageWindow::~CDamageWindow()
 void CDamageWindow::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange( pDX );
-	DDX_Control( pDX, IDC_SCROLLBAR1, m_scrollDamage );
+//	DDX_Control( pDX, IDC_SCROLLBAR1, m_scrollDamage );
 }
 
 
@@ -50,6 +51,36 @@ BOOL CDamageWindow::OnInitDialog()
 	m_scrollDamage.GetScrollInfo( &scrollinfo );
 	scrollinfo.nPage = 1;
 	m_scrollDamage.SetScrollInfo( &scrollinfo );
+
+	// 表示に必要な画像をロードする
+	std::vector<CString> picname = {
+			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
+			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
+			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
+			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
+			_T( "steel.bmp" ), _T( "fairy.bmp" ),
+
+			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
+			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
+			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
+			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
+			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
+
+			_T( "gray.bmp" ),
+			_T( "red.bmp" ), _T( "red_random.bmp" ),
+			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
+			_T( "green.bmp" ), _T( "green_random.bmp" ),
+	};
+	CString strPath;
+	TCHAR buf[2048] = { 0 };
+	int cnt = 0;
+	GetCurrentDirectory( sizeof( buf ), buf );
+	for ( auto &&filename : picname )
+	{
+		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
+
+		auto ret = m_img[cnt++].Load( strPath );
+	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 例外 : OCX プロパティ ページは必ず FALSE を返します。
@@ -138,54 +169,15 @@ void CDamageWindow::OnPaint()
 	PokeType pt;
 	auto typetable = pt.getTypeTable();
 
-	// 表示に必要な画像をロードする
-	std::vector<CString> picname = {
-			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
-			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
-			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
-			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
-			_T( "steel.bmp" ), _T( "fairy.bmp" ),
-
-			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
-			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
-			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
-			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
-			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
-
-			_T( "gray.bmp" ),
-			_T( "red.bmp" ), _T( "red_random.bmp" ),
-			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
-			_T( "green.bmp" ), _T( "green_random.bmp" ),
-	};
-	CString strPath;
-	TCHAR buf[2048] = { 0 };
-	GetCurrentDirectory( sizeof( buf ), buf );
-	CImage m_img[64];
-#if 0
-	for ( auto &&filename : picname )
-	{
-		CImage img;
-		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
-
-		auto ret = img.Load( strPath );
-		m_img.emplace_back( img );
-	}
-#else
-	for ( int i = 0; i < picname.size(); ++i )
-	{
-		strPath.Format( _T( "%s\\pic\\%s" ), buf, picname[i] );
-		m_img[i].Load( strPath ); // -> CImage をOnInitDialogで初期化するのは無理みたい…？これに何時間かかったか………。
-		// と言うか、これが原因ならもともとの予定だった同じウィンドウに子ダイアログくっつけて描画するやつイケるんじゃないの…？
-	}
-#endif
-
 	// bitmap
 	CDC bmpDC;
 	auto ret = bmpDC.CreateCompatibleDC( &dc );
 	CBitmap *cbmp = CBitmap::FromHandle( m_img[0] ); // 仮の画像をロードする
 	CBitmap *oldbmp = bmpDC.SelectObject( cbmp );
 
-	for ( int i = min( m_scrollDamage.GetScrollPos(), sz - 5 ), j = 0; i < min( m_scrollDamage.GetScrollPos() + 5, sz ); ++i, ++j )
+	// そもそも全部描画してスクロールさせるなら、サイズ気にせず全部描画しちゃえば…？
+	for ( int i = 0, j = 0; i < sz; ++i, ++j ) // ちょっと修正するのめんどいので。後でちゃんとiに統一する。
+//	for ( int i = min( m_scrollDamage.GetScrollPos(), sz - 5 ), j = 0; i < min( m_scrollDamage.GetScrollPos() + 5, sz ); ++i, ++j )
 	{
 		CRecordset rs( m_database );
 		CString strSQL;
