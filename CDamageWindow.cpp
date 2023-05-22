@@ -54,17 +54,17 @@ BOOL CDamageWindow::OnInitDialog()
 
 	// 表示に必要な画像をロードする
 	std::vector<CString> picname = {
-			_T( "normal.bmp" ), _T( "flare.bmp" ), _T( "water.bmp" ), _T( "electric.bmp" ),
-			_T( "grass.bmp" ), _T( "ice.bmp" ), _T( "fighting.bmp" ), _T( "poison.bmp" ),
-			_T( "ground.bmp" ), _T( "flying.bmp" ), _T( "psychic.bmp" ), _T( "bug.bmp" ),
-			_T( "rock.bmp" ), _T( "ghost.bmp" ), _T( "dragon.bmp" ), _T( "dark.bmp" ),
-			_T( "steel.bmp" ), _T( "fairy.bmp" ),
+			_T( "normal.png" ), _T( "flare.png" ), _T( "water.png" ), _T( "electric.png" ),
+			_T( "grass.png" ), _T( "ice.png" ), _T( "fighting.png" ), _T( "poison.png" ),
+			_T( "ground.png" ), _T( "flying.png" ), _T( "psychic.png" ), _T( "bug.png" ),
+			_T( "rock.png" ), _T( "ghost.png" ), _T( "dragon.png" ), _T( "dark.png" ),
+			_T( "steel.png" ), _T( "fairy.png" ),
 
-			_T( "normal_tera.bmp" ), _T( "flare_tera.bmp" ), _T( "water_tera.bmp" ), _T( "electric_tera.bmp" ),
-			_T( "grass_tera.bmp" ), _T( "ice_tera.bmp" ), _T( "fighting_tera.bmp" ), _T( "poison_tera.bmp" ),
-			_T( "ground_tera.bmp" ), _T( "flying_tera.bmp" ), _T( "psychic_tera.bmp" ), _T( "bug_tera.bmp" ),
-			_T( "rock_tera.bmp" ), _T( "ghost_tera.bmp" ), _T( "dragon_tera.bmp" ), _T( "dark_tera.bmp" ),
-			_T( "steel_tera.bmp" ), _T( "fairy_tera.bmp" ),
+			_T( "normal_tera.png" ), _T( "flare_tera.png" ), _T( "water_tera.png" ), _T( "electric_tera.png" ),
+			_T( "grass_tera.png" ), _T( "ice_tera.png" ), _T( "fighting_tera.png" ), _T( "poison_tera.png" ),
+			_T( "ground_tera.png" ), _T( "flying_tera.png" ), _T( "psychic_tera.png" ), _T( "bug_tera.png" ),
+			_T( "rock_tera.png" ), _T( "ghost_tera.png" ), _T( "dragon_tera.png" ), _T( "dark_tera.png" ),
+			_T( "steel_tera.png" ), _T( "fairy_tera.png" ),
 
 			_T( "gray.bmp" ),
 			_T( "red.bmp" ), _T( "red_random.bmp" ),
@@ -172,12 +172,10 @@ void CDamageWindow::OnPaint()
 	// bitmap
 	CDC bmpDC;
 	auto ret = bmpDC.CreateCompatibleDC( &dc );
-	CBitmap *cbmp = CBitmap::FromHandle( m_img[0] ); // 仮の画像をロードする
-	CBitmap *oldbmp = bmpDC.SelectObject( cbmp );
+	CBitmap *cbmp, *oldbmp = nullptr;
 
 	// そもそも全部描画してスクロールさせるなら、サイズ気にせず全部描画しちゃえば…？
-	for ( int i = 0, j = 0; i < sz; ++i, ++j ) // ちょっと修正するのめんどいので。後でちゃんとiに統一する。
-//	for ( int i = min( m_scrollDamage.GetScrollPos(), sz - 5 ), j = 0; i < min( m_scrollDamage.GetScrollPos() + 5, sz ); ++i, ++j )
+	for ( int i = 0; i < sz; ++i )
 	{
 		CRecordset rs( m_database );
 		CString strSQL;
@@ -191,28 +189,30 @@ void CDamageWindow::OnPaint()
 		int iHeight = 20; // 高さ、あとでちゃんと直す
 
 		cbmp = CBitmap::FromHandle( m_img[typetable[strType]] );
-		bmpDC.SelectObject( cbmp );
+		if ( oldbmp == nullptr )
+		{
+			oldbmp = bmpDC.SelectObject( cbmp );
+		}
+		else
+		{
+			bmpDC.SelectObject( cbmp );
+		}
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-//		dc.SetBrushOrg( 0, 0 );
-		dc.StretchBlt( 10, 10 + j * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 10, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
 		cbmp->DeleteObject();
 
 		/* 技名のテキストを表示 */
-		iWidth = 230;
-		iHeight = 16;
 		CRect rect;
-		rect.SetRect( 35, 10 + j * 20, iWidth, 26 + j * 20 );
+		rect.SetRect( 35, 10 + i * 40, 170, 26 + i * 40 );
 		dc.DrawText( m_printData[i].first, rect, 0 );
 
 		/* ダメージゲージのベース部分を表示 */
-		iWidth = 250;
-		iHeight = 20;
-		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		iWidth = 220;
+		iHeight = 16;
 		cbmp = CBitmap::FromHandle( m_img[IMAGENAME_GAUGE_GRAY] );
 		bmpDC.SelectObject( cbmp );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-//		dc.SetBrushOrg( 0, 0 );
-		dc.StretchBlt( 10, 30 + j * 20, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 180, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
 		cbmp->DeleteObject();
 
 		/* ダメージゲージの乱数幅部分を表示 */ // -> ゲージの色はWikiを見て確認！！
@@ -234,25 +234,21 @@ void CDamageWindow::OnPaint()
 			imgIndex = IMAGENAME_GAUGE_RED;
 		}
 
-		iWidth = 250 * ( max( m_defHP - m_printData[i].second[0], 0 ) / (double)m_defHP ); // 表示する長さは残りHPによって変わるはず
-		iHeight = 20;
-		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		iWidth = 220 * ( max( m_defHP - m_printData[i].second[0], 0 ) / (double)m_defHP ); // 表示する長さは残りHPによって変わるはず
+		iHeight = 14;
 		cbmp = CBitmap::FromHandle( m_img[imgIndex + 1] );
 		bmpDC.SelectObject( cbmp );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-//		dc.SetBrushOrg( 0, 0 );
-		dc.StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
 		cbmp->DeleteObject();
 
 		/* ダメージゲージの残りHP部分を表示 */
-		iWidth = 250 * ( max( m_defHP - m_printData[i].second[15], 0 ) / (double)m_defHP ); // 確定で残る量を算出するので最大ダメージでゲージ量を計算
-		iHeight = 20;
-		rect.SetRect( 10, 30 + j * 20, 20, 45 + j * 20 );
+		iWidth = 220 * ( max( m_defHP - m_printData[i].second[15], 0 ) / (double)m_defHP ); // 確定で残る量を算出するので最大ダメージでゲージ量を計算
+		iHeight = 14;
 		cbmp = CBitmap::FromHandle( m_img[imgIndex] );
 		bmpDC.SelectObject( cbmp );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-//		dc.SetBrushOrg( 0, 0 );
-		dc.StretchBlt( 0, 0, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
 		cbmp->DeleteObject();
 	}
 
