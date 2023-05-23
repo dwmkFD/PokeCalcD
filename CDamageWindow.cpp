@@ -122,6 +122,14 @@ void CDamageWindow::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 BOOL CDamageWindow::OnMouseWheel( UINT nFlags, short zDelta, CPoint pt )
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+	if ( zDelta > 0 )
+	{
+		// 上にスクロール
+	}
+	else if ( zDelta < 0 )
+	{
+		// 下にスクロール
+	}
 
 	return CDialogEx::OnMouseWheel( nFlags, zDelta, pt );
 }
