@@ -29,6 +29,9 @@ public:
 				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
 				// bit10: 達人の帯、
 
+	bool m_WonderRoom; // ワンダールーム
+
+	// ↓PokemonData側に移動させたんだけど、コンパイル通らなくなるので、修正完了まではこのままで
 	// 特性ビット定義
 	static constexpr int ABILITY_SNIPER = 1; // スナイパー
 
@@ -83,6 +86,11 @@ public:
 	int correctPower( CString name, CBattleSettings option ) {
 		// 技の威力が変わる場合に補正する処理
 		int power = m_moveDB[name].m_power;
+
+		// サイコフィールドでワイドフォースを撃つ場合は威力2倍かつ全体技
+		// エレキボール、ジャイロボールは素早さを比較して威力決定
+		// ヒートスタンプ、けたぐり、ヘビーボンバーは体重(差)によって威力決定
+		// 無天候と晴れ以外の天候でのソーラービームは威力半減(ソーラーブレードはどっちだっけ？)
 	}
 
 	double calcCriticalProbability( CString name, CBattleSettings option ) {
@@ -164,23 +172,40 @@ public:
 			long long A = 1, D = 1, M = 1;
 			long long Mhalf = 1, Mfilter = 1, MTwice = 1;
 
-			/* STEP1. A/Dを決定 */ // --> 要確認！！！　ランク補正ってここのA/Dを直接いじる？
-			if ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
+			/* STEP1. A/Dを決定 */ // --> 要確認！！！　ランク補正ってここのA/Dを直接いじる？ -> もう一個、こだわり系はステータス1.5倍だよね？ここ？？
+			auto calcAD = []( long long &A, long long &D, const PokemonData &atk, const PokemonData &def, const int category ) {
+				if ( category & PokeMove::PHYSICS_CHECK )
+				{
+					// 物理技の時は、攻撃側の「攻撃」と防御側の「防御」を使う
+					A *= atk.m_status[PokemonData::Attack_Index]; D *= def.m_status[PokemonData::Block_Index];
+				}
+				if ( category & PokeMove::SPECIAL_CHECK )
+				{
+					// 特殊技の時は、攻撃側の「特攻」と防御側の「特防」を使う
+					A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Diffence_Index];
+				}
+			};
+			calcAD( A, D, atk, def, m_moveDB[atkmove].m_category );
+
+			// STEP1-1. サイコショックとサイコブレイクは攻撃側の特攻、防御側の防御を使う
+			if ( ( atkmove == _T( "サイコショック" ) ) || ( atkmove == _T( "サイコブレイク" ) ) )
 			{
-				// 物理技の時は、攻撃側の「攻撃」と防御側の「防御」を使う
-				A *= atk.m_status[PokemonData::Attack_Index]; D *= def.m_status[PokemonData::Block_Index];
-			}
-			if ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK )
-			{
-				// 特殊技の時は、攻撃側の「特攻」と防御側の「特防」を使う
-				A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Diffence_Index];
+				A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Block_Index];
 			}
 
-			// ワンダールームの場合はDを再計算する処理を入れる（防御と特防を入れ替える）
-			// サイコショック等の処理もここにいれる？
+			// STEP1-2. フォトンゲイザーとシェルアームズはここで補正？
+			// 攻撃・特攻と防御・特防を比較して、一番ダメージが大きくなるようにA/Dを決めるんだっけ？
+
+			// STEP1-3. ワンダールームの場合はDを再計算する処理を入れる（防御と特防を入れ替える）
+			if ( option.m_WonderRoom )
+			{
+				long long A_dummy = 1;
+				D = 1; // Aは変わらないのでダミーで計算して結果は捨て、Dはここでの結果を採用する
+				calcAD( A_dummy, D, atk, def, m_moveDB[atkmove].m_category ^ 0x3 ); // 物理/特殊の判定を入れ替えてDだけ再計算する
+			}
+
 			// ソーラービームは威力が変わるから、範囲補正より先にそっちかも…？
 			// 威力変化系の技は、別途専用関数作って計算した方が良さそう
-			// AとDが変わるタイプの威力変化系（フォトンゲイザーとか）はここかなぁ…。
 
 			/* STEP2. 最初の()内を計算 */
 			/* STEP2-1. 威力を決定 */
@@ -238,7 +263,7 @@ public:
 
 			/* STEP2-LAST. 計算した威力を使って残りを計算 */
 			auto damage_base = [&]( const long long a, const long long d, const int p, long long &dmg ) {
-				dmg = dmg * ( power * a ) / d; dmg = ( dmg / 4096 ) * 4096;
+				dmg = dmg * ( p * a ) / d; dmg = ( dmg / 4096 ) * 4096;
 				dmg /= 50; dmg = ( dmg / 4096 ) * 4096;
 				dmg += 8192; dmg = ( dmg / 4096 ) * 4096;
 				/* STEP3. 範囲補正 */
@@ -264,7 +289,7 @@ public:
 						dmg += 2047;
 						dmg /= 4096;
 					}
-					else if ( m_moveDB[atkmove].m_type == _T( "みず" ) )
+					else if ( m_moveDB[atkmove].m_type == _T( "みず" ) ) // -> ウネルミナモの専用技は晴れでも威力1.5倍だった気がする
 					{
 						dmg *= 2048;
 						dmg += 2047;
@@ -309,6 +334,7 @@ public:
 			}
 
 			/* STEP8. タイプ一致補正 */
+			// -> テラスタイプ一致の計算もここでやる？
 			for ( auto &&type : atk.m_type )
 			{
 				if ( type == m_moveDB[atkmove].m_type )

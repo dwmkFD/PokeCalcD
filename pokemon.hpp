@@ -16,45 +16,54 @@ public:
 	int m_barrier; // bit0: リフレクター、 bit1: 光の壁
 	uint64_t m_ability; // 特性ビットをセット
 	uint64_t m_item; // 持ち物
-	uint64_t m_rank; // ランク補正
+	uint64_t m_rank; // ランク補正 -> これステータス毎に細かくしないとダメでしょ…
+	CString m_teraType; // テラスタイプ
+
+	void clear() {
+		m_barrier = 0;
+		m_ability = 0;
+		m_item = 0;
+		m_rank = 0; // ↑合わせて直す
+	}
 
 	// 特性ビット定義
-	static constexpr uint64_t ABILITY_SNIPER        = 0x0000000000000001; // スナイパー
-	static constexpr uint64_t ABILITY_TINTLENS      = 0x0000000000000002; // 色眼鏡
-	static constexpr uint64_t ABILITY_FLUFFY_FLARE  = 0x0000000000000004; // もふもふ(炎被弾)
-	static constexpr uint64_t ABILITY_FRIENDGUARD   = 0x0000000000000008; // フレンドガード
-	static constexpr uint64_t ABILITY_ICE_SCALES    = 0x0000000000000010; // 氷の鱗粉
-	static constexpr uint64_t ABILITY_PUNKROCK_ATK  = 0x0000000000000020; // パンクロック(攻撃側)
-	static constexpr uint64_t ABILITY_PUNKROCK_DEF  = 0x0000000000000040; // パンクロック(防御側)
-	static constexpr uint64_t ABILITY_SHADOWSHIELD  = 0x0000000000000080; // ファントムガード
-	static constexpr uint64_t ABILITY_MULTISCALE    = 0x0000000000000100; // マルチスケイル
-	static constexpr uint64_t ABILITY_FLUFFY_DIRECT = 0x0000000000000200; // もふもふ(接触技)
-	static constexpr uint64_t ABILITY_FILTER        = 0x0000000000000400; // ハードロック/フィルター
-	static constexpr uint64_t ABILITY_PRISMARMOR    = 0x0000000000000800; // プリズムアーマー
-	static constexpr uint64_t ABILITY_LONGREACH     = 0x0000000000001000; // 遠隔
-	static constexpr uint64_t ABILITY_A = 0x0000000000002000; // ノーマルスキン
-	static constexpr uint64_t ABILITY_B = 0x0000000000004000; // スカイスキン
-	static constexpr uint64_t ABILITY_C = 0x0000000000008000; // エレキスキン
-	static constexpr uint64_t ABILITY_D = 0x0000000000010000; // フリーズスキン
-	static constexpr uint64_t ABILITY_E = 0x0000000000020000; // フェアリースキン
-	static constexpr uint64_t ABILITY_F = 0x0000000000040000; // アナライズ
-	static constexpr uint64_t ABILITY_G = 0x0000000000080000; // うるおいボイス
-	static constexpr uint64_t ABILITY_H = 0x0000000000100000; // エアロック/ノー天気
-	static constexpr uint64_t ABILITY_I = 0x0000000000200000; // 硬い爪
-	static constexpr uint64_t ABILITY_J = 0x0000000000400000; // 頑丈顎
-	static constexpr uint64_t ABILITY_K = 0x0000000000800000; // 肝っ玉
-	static constexpr uint64_t ABILITY_SUPERLUCK = 0x0000000000100000; // 強運
-	static constexpr uint64_t ABILITY_M = 0x0000000000200000; // 激流
-	static constexpr uint64_t ABILITY_N = 0x0000000000400000; // 新緑
-	static constexpr uint64_t ABILITY_O = 0x0000000000800000; // 猛火
-	static constexpr uint64_t ABILITY_P = 0x0000000001000000; // 変幻自在/リベロ
-	static constexpr uint64_t ABILITY_Q = 0x0000000002000000; // 五里霧中
-	static constexpr uint64_t ABILITY_R = 0x0000000004000000; // 根性
-	static constexpr uint64_t ABILITY_S = 0x0000000008000000; // サンパワー
-	static constexpr uint64_t ABILITY_T = 0x0000000001000000; // スキルリンク
-	static constexpr uint64_t ABILITY_U = 0x0000000002000000; // 水泡
-	static constexpr uint64_t ABILITY_V = 0x0000000004000000; // 捨て身
-	static constexpr uint64_t ABILITY_W = 0x0000000008000000; // 砂の力
+	static constexpr uint64_t ABILITY_SNIPER         = 0x0000000000000001; // スナイパー
+	static constexpr uint64_t ABILITY_TINTLENS       = 0x0000000000000002; // 色眼鏡
+	static constexpr uint64_t ABILITY_FLUFFY_FLARE   = 0x0000000000000004; // もふもふ(炎被弾)
+	static constexpr uint64_t ABILITY_FRIENDGUARD    = 0x0000000000000008; // フレンドガード
+	static constexpr uint64_t ABILITY_ICE_SCALES     = 0x0000000000000010; // 氷の鱗粉
+	static constexpr uint64_t ABILITY_PUNKROCK_ATK   = 0x0000000000000020; // パンクロック(攻撃側)
+	static constexpr uint64_t ABILITY_PUNKROCK_DEF   = 0x0000000000000040; // パンクロック(防御側)
+	static constexpr uint64_t ABILITY_SHADOWSHIELD   = 0x0000000000000080; // ファントムガード
+	static constexpr uint64_t ABILITY_MULTISCALE     = 0x0000000000000100; // マルチスケイル
+	static constexpr uint64_t ABILITY_FLUFFY_DIRECT  = 0x0000000000000200; // もふもふ(接触技)
+	static constexpr uint64_t ABILITY_FILTER         = 0x0000000000000400; // ハードロック/フィルター
+	static constexpr uint64_t ABILITY_PRISMARMOR     = 0x0000000000000800; // プリズムアーマー
+	static constexpr uint64_t ABILITY_LONGREACH      = 0x0000000000001000; // 遠隔
+	static constexpr uint64_t ABILITY_NORMALIZE      = 0x0000000000002000; // ノーマルスキン
+	static constexpr uint64_t ABILITY_AERILATE       = 0x0000000000004000; // スカイスキン
+	static constexpr uint64_t ABILITY_GALVANIZE      = 0x0000000000008000; // エレキスキン
+	static constexpr uint64_t ABILITY_REFRIGERATE    = 0x0000000000010000; // フリーズスキン
+	static constexpr uint64_t ABILITY_PIXILATE       = 0x0000000000020000; // フェアリースキン
+	static constexpr uint64_t ABILITY_ANALYTIC       = 0x0000000000040000; // アナライズ
+	static constexpr uint64_t ABILITY_LIQUIDVOICE    = 0x0000000000080000; // うるおいボイス
+	static constexpr uint64_t ABILITY_AIRLOCK        = 0x0000000000100000; // エアロック/ノー天気
+	static constexpr uint64_t ABILITY_TOUGHCLAWS     = 0x0000000000200000; // 硬い爪 // memo: 5325/4096
+	static constexpr uint64_t ABILITY_STRONGJAW      = 0x0000000000400000; // 頑丈顎
+	static constexpr uint64_t ABILITY_SCRAPPY        = 0x0000000000800000; // 肝っ玉
+	static constexpr uint64_t ABILITY_SUPERLUCK      = 0x0000000000100000; // 強運
+	static constexpr uint64_t ABILITY_TORRENT        = 0x0000000000200000; // 激流
+	static constexpr uint64_t ABILITY_OVERGROW       = 0x0000000000400000; // 新緑
+	static constexpr uint64_t ABILITY_BLAZE          = 0x0000000000800000; // 猛火
+	static constexpr uint64_t ABILITY_PROTEAN        = 0x0000000001000000; // 変幻自在/リベロ
+	static constexpr uint64_t ABILITY_GORILLATACTICS = 0x0000000002000000; // 五里霧中
+	static constexpr uint64_t ABILITY_GUTS           = 0x0000000004000000; // 根性
+	static constexpr uint64_t ABILITY_SOLARPOWER     = 0x0000000008000000; // サンパワー
+	static constexpr uint64_t ABILITY_SKILLLINK      = 0x0000000001000000; // スキルリンク
+	static constexpr uint64_t ABILITY_WATERBUBBLE    = 0x0000000002000000; // 水泡
+	static constexpr uint64_t ABILITY_RECKLESS       = 0x0000000004000000; // 捨て身
+	static constexpr uint64_t ABILITY_SANDFORCE      = 0x0000000008000000; // 砂の力
+	// まだ途中………
 
 	// アイテムビット定義
 	static constexpr uint64_t ITEM_METRONOME       = 0x000000000000003F; // メトロノームN回目

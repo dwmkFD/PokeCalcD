@@ -687,6 +687,7 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 	}
 
 	UpdateData( FALSE );
+	GetParent()->SendMessage( PCD_DAMAGECALC_REQUEST ); // ステータスを修正したらダメージを再計算
 }
 
 

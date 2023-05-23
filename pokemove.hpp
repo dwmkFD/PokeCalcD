@@ -23,6 +23,8 @@ public:
 		m_power = power; m_accuracy = accuracy; m_direct = direct;
 		m_range = -1; m_critical = critical;
 		// 技DBを編集するまでは急所に当たりやすい技は無しとする
+		// 急所技だけじゃなくて、小さくなる相手に必中・威力2倍とか、顎技、音技…etcも必要
+		// -> 今のDBでも、説明文に書いてある気がするから、そこから拾う？
 	}
 
 	void setRange( int range ) { m_range = range; }
@@ -33,7 +35,7 @@ public:
 	}
 
 	// 技分類チェック
-	// -> TODO: テラバーストみたいな元の分類から変わるやつは、専用のビットを作る（壁側の判定も -> 実数値とランク補正見て壁option切り替えないとね…）
+	// -> TODO: テラバーストみたいな元の分類から変わるやつは、専用のビットを作る？（壁側の判定も -> 実数値とランク補正見て壁option切り替えないとね…）
 	static constexpr unsigned int PHYSICS_CHECK = 0x1;
 	static constexpr unsigned int SPECIAL_CHECK = 0x2;
 

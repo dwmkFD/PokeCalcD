@@ -51,7 +51,7 @@ BOOL CDamageWindow::OnInitDialog()
 	m_scrollDamage.GetScrollInfo( &scrollinfo );
 	scrollinfo.nPage = 1;
 	scrollinfo.nMin = 0;
-	scrollinfo.nMax = 100;
+	scrollinfo.nMax = 0;
 	m_scrollDamage.SetScrollInfo( &scrollinfo );
 
 	// 表示に必要な画像をロードする
@@ -225,6 +225,8 @@ void CDamageWindow::OnPaint()
 		int iWidth = 20;  // 幅、あとでちゃんと直す
 		int iHeight = 20; // 高さ、あとでちゃんと直す
 
+		// テラスタイプと一致する場合はアイコン変えたい（つまりテラバーストは常にテラスタイプアイコンになるね、別に良いけど）
+		// -> 元タイプとも一致する、完全なテラスタイプ一致はもうちょっと強調してあげたい気もする…（一致補正2倍だから）
 		if ( oldbmp == nullptr )
 		{
 			oldbmp = bmpDC.SelectObject( bitmaptable[typetable[strType]] );

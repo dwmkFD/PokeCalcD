@@ -197,8 +197,6 @@ BOOL CPokeCalcDDlg::OnInitDialog()
 
 	for ( int i = 0; i < 2; ++i )
 	{
-		// ダイアログの代わりにStaticControlを貼り付けて、そこに描画したらいける…？ -> ダメっぽい。。
-		// -> 子ダイアログにするのやめて、普通にポップアップ表示しちゃうか…？
 		m_dlgDamageWindow[i].ShowWindow( SW_SHOW );
 		m_dlgDamageWindow[i].setDatabase( &m_database );
 	}
