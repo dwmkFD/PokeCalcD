@@ -157,7 +157,7 @@ void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage, 
 	std::vector<std::pair<CString, int>> tmpMoveName;
 	for ( auto &&it : damage )
 	{
-		tmpMoveName.emplace_back( std::make_pair( it.first, it.second[15] ) ); // 急所に当たらなかった場合の一番ダメージが大きい結果を元にソートしたい
+		tmpMoveName.emplace_back( std::make_pair( it.first, it.second[32] ) ); // 期待値が大きい順にソートする(命中率や急所率込）
 	}
 	sort( tmpMoveName.begin(), tmpMoveName.end(),
 		[]( std::pair<CString, int> a, std::pair<CString, int> b ) {
@@ -251,7 +251,7 @@ void CDamageWindow::OnPaint()
 		/* ダメージゲージの乱数幅部分を表示 */ // -> ゲージの色はWikiを見て確認！！
 		// 乱数幅の方から描画して上から残りHP部分で上書きした方が楽だよね
 		UINT imgIndex = 0;
-		if ( m_defHP * 0.4 >= m_printData[i].second[7] ) // だいたい真ん中辺り＝平均ダメージとして、これをベースにゲージの色を決める
+		if ( m_defHP * 0.5 >= m_printData[i].second[7] ) // だいたい真ん中辺り＝平均ダメージとして、これをベースにゲージの色を決める
 		{
 			// ダメージ40％以下の場合は緑ゲージ
 			imgIndex = IMAGENAME_GAUGE_GREEN;
@@ -279,6 +279,15 @@ void CDamageWindow::OnPaint()
 		bmpDC.SelectObject( bitmaptable[imgIndex] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
+
+		/* 急所に当たらなかった場合のダメージ範囲をゲージの下に出したい */
+		rect.SetRect( 180, 30 + i * 40, 450, 46 + i * 40 );
+		CString strDamageRange;
+		strDamageRange.Format( _T( "%.1lf％ ～ %.1lf％（期待値：%.1lf）" ),
+							   m_printData[i].second[0] / (double)m_defHP * 100,
+							   m_printData[i].second[15] / (double)m_defHP * 100,
+							   m_printData[i].second[32] / (double)m_defHP * 100 );
+		dc.DrawText( strDamageRange, rect, 0 );
 	}
 
 	for ( int i = 0; i < bitmaptable.size(); ++i )

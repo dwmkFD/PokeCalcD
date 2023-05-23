@@ -43,7 +43,7 @@ public:
 	static constexpr uint64_t ABILITY_I = 0x0000000000200000; // çdÇ¢í‹
 	static constexpr uint64_t ABILITY_J = 0x0000000000400000; // äÊè‰ä{
 	static constexpr uint64_t ABILITY_K = 0x0000000000800000; // äÃÇ¡ã 
-	static constexpr uint64_t ABILITY_L = 0x0000000000100000; // ã≠â^
+	static constexpr uint64_t ABILITY_SUPERLUCK = 0x0000000000100000; // ã≠â^
 	static constexpr uint64_t ABILITY_M = 0x0000000000200000; // åÉó¨
 	static constexpr uint64_t ABILITY_N = 0x0000000000400000; // êVóŒ
 	static constexpr uint64_t ABILITY_O = 0x0000000000800000; // ñ“âŒ

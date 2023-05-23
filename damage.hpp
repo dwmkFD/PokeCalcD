@@ -85,6 +85,44 @@ public:
 		int power = m_moveDB[name].m_power;
 	}
 
+	double calcCriticalProbability( CString name, CBattleSettings option ) {
+		// option条件下で急所に当たる確率を計算する
+		// -> 急所に当たりやすい技、急所ランク(作ってない気がする…)、持ち物などを考慮 -> option はPokemonData.opt の方にしないとダメだと思うけど、暫定で
+		double result = 1.0;
+		int rank = 0;
+		rank += m_moveDB[name].m_critical; // 急所に当たりやすい技なら、急所ランクを上げる(確定急所技は+3、それ以外は+1）
+/*
+		if ( option.m_ability & ABILITY_SUPERLUCK ) // 攻撃側の特性が強運
+		{
+			++rank;
+		}
+		if ( ( option.m_ability & ABILITY_MERCILESS ) // 攻撃側の特性が人でなしで、
+			&& ( option.m_poison ) ) // 防御側が毒/猛毒状態
+		{
+			rank += 3;
+		}
+		if ( option.m_item & ITEM_SCOPELENS ) // ピントレンズ/するどいツメを持っている
+		{
+			++rank;
+		}
+*/
+		// rank >= 3 なら確定急所
+		if ( rank >= 2 )
+		{
+			result /= 2.0;
+		}
+		else if ( rank >= 1 )
+		{
+			result /= 8.0;
+		}
+		else
+		{
+			result /= 24.0;
+		}
+
+		return ( result );
+	}
+
 	std::map<CString, std::vector<int>> calc( PokemonData atk, PokemonData def, CBattleSettings option ) {
 		// 攻撃側が覚える全ての攻撃技でダメージ計算する
 		// 戻り値は、「技名：ダメージパターン(乱数と急所により全32パターン)」を覚える技全てで計算した結果
@@ -536,25 +574,31 @@ public:
 
 			/* STEP13. 計算結果を4096で割る */
 			// ここまでlong longで計算したのでint型に変換(別に全部long longにしても良いと思うんだけど…)
-			std::vector<int> tmpres2( 32 );
+			std::vector<int> tmpres2( 33 );
 			for ( int i = 0; i < 32; ++i )
 			{
 				tmpres2[i] = tmpresult[i] / 4096;
 			}
+
+			/* STEP14. 期待値を計算する */
+			double tmp_exp = 0.0;
+			for ( int i = 0; i < 16; ++i )
+			{
+				// 基本ダメージは、計算結果 × 急所に"当たらない"確率 × 技の命中率
+				tmp_exp += ( tmpres2[i] / 16.0 ) * ( 1.0 - calcCriticalProbability( atkmove, option ) ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
+			}
+			for ( int i = 16; i < 32; ++i )
+			{
+				// 急所に当たった場合のダメージは、計算結果 × 急所に"当たる"確率 × 技の命中率
+				tmp_exp += ( tmpres2[i] / 16.0 ) * calcCriticalProbability( atkmove, option ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
+			}
+			tmpres2[32] = (int)tmp_exp;
 
 			/* LAST STEP. 計算結果を結果配列に突っ込む */
 			// 同じ技を重複してデータベースに登録してる問題をこっち側で解決する
 			result[atkmove] = tmpres2;
 		}
 
-		// 与えるダメージが大きい技から順番に並べたいね…
-		// たぶん、各要素の先頭の値でソートしちゃって良いと思うけど、std::mapのままだとソートできないか…
-		/*
-		sort( result.begin(), result.end(),
-			[]( std::pair<CString, std::vector<int>> x, std::pair<CString, std::vector<int>> y ) {
-			return ( x.second[0] > y.second[0] );
-		} );
-		*/
 		return ( result );
 	}
 
