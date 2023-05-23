@@ -30,16 +30,19 @@ public:
 
 private:
 	CDatabase *m_database;
-	std::vector<CImage> m_imgggg; // 画像の個数は決まってるので決め打ちの方が良い？(全18タイプ、テラスタイプ、ゲージの色）
 
 	// ゲージの色
-	static constexpr unsigned int IMAGENAME_GAUGE_GRAY = 36;
-	static constexpr unsigned int IMAGENAME_GAUGE_RED = 37;
-	static constexpr unsigned int IMAGENAME_GAUGE_RED_RANDOM = 38;
-	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW = 39;
-	static constexpr unsigned int IMAGENAME_GAUGE_YELLOW_RANDOM = 40;
-	static constexpr unsigned int IMAGENAME_GAUGE_GREEN = 41;
-	static constexpr unsigned int IMAGENAME_GAUGE_GREEN_RANDOM = 42;
+	enum {
+		IMAGENAME_GAUGE_GRAY = 36,
+		IMAGENAME_GAUGE_RED,
+		IMAGENAME_GAUGE_RED_RANDOM,
+		IMAGENAME_GAUGE_YELLOW,
+		IMAGENAME_GAUGE_YELLOW_RANDOM,
+		IMAGENAME_GAUGE_GREEN,
+		IMAGENAME_GAUGE_GREEN_RANDOM,
+		IMAGENAME_ALLIMAGE_SIZE,
+
+	};
 
 	int m_defHP; // ダメージを与える相手の最大HP実数値
 	std::vector<std::pair<CString, std::vector<int>>> m_printData; // 描画する計算結果

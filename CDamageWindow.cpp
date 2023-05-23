@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CDamageWindow, CDialogEx)
 
 CDamageWindow::CDamageWindow(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DAMAGE_WINDOW, pParent),
-	m_img( 64 )
+	m_img( IMAGENAME_ALLIMAGE_SIZE )
 {
 }
 
@@ -50,6 +50,8 @@ BOOL CDamageWindow::OnInitDialog()
 	scrollinfo.fMask = SIF_PAGE | SIF_RANGE;
 	m_scrollDamage.GetScrollInfo( &scrollinfo );
 	scrollinfo.nPage = 1;
+	scrollinfo.nMin = 0;
+	scrollinfo.nMax = 100;
 	m_scrollDamage.SetScrollInfo( &scrollinfo );
 
 	// 表示に必要な画像をロードする
@@ -90,10 +92,27 @@ BOOL CDamageWindow::OnInitDialog()
 void CDamageWindow::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
-	if ( nSBCode == SB_LINEUP || nSBCode == SB_LINEDOWN )
+	switch ( nSBCode )
 	{
-		// スクロールバーの↑↓を押下された時
-		printDamage( nPos );
+		case SB_LINEUP:
+//			ScrollWindow( 0, -10 );
+			break;
+
+		case SB_LINEDOWN:
+//			ScrollWindow( 0, 10 );
+			break;
+
+		case SB_THUMBPOSITION:
+			break;
+
+		case SB_PAGEUP:
+			break;
+
+		case SB_PAGEDOWN:
+			break;
+
+		default:
+			break;
 	}
 
 	CDialogEx::OnVScroll( nSBCode, nPos, pScrollBar );
@@ -111,6 +130,9 @@ BOOL CDamageWindow::OnMouseWheel( UINT nFlags, short zDelta, CPoint pt )
 // ダメージ計算結果をsize個表示するためのスクロールバー設定
 void CDamageWindow::setScrollInfo( unsigned int size )
 {
+	// ここはむしろスクロール量の調整の方をやりたい
+	// 技候補が少ない時はスライダーは長く、技候補が多い時はスライダーは短くなるはず…
+
 	SCROLLINFO scrollinfo = { 0 };
 	m_scrollDamage.GetScrollInfo( &scrollinfo );
 	scrollinfo.nMin = 0;
@@ -152,12 +174,7 @@ void CDamageWindow::OnPaint()
 						 // TODO: ここにメッセージ ハンドラー コードを追加します。
 						 // 描画メッセージで CDialogEx::OnPaint() を呼び出さないでください。
 
-	// この関数では、全ての技に対して描画準備をしておくが、実際は画面上には5つくらいだけ表示したい
-	// で、スクロールバーを上下に動かした時、nPosの前後2つずつくらいを出す、みたいにしたい
-	// →毎回、全部の技に対してゲージを描画すると遅くなりそうだから、まとめて読むのはここだけにしたいけど、言うほど気にしなくて良いか…？
-	// 　→ほとんどの場合は関係ないけど、全部の技を覚えるやつとかいるからなぁ…。
-
-	// 計算された技の個数分だけゲージを用意する
+	// 計算してない時は処理しない
 	size_t sz = m_printData.size();
 
 	if ( sz <= 0 )
@@ -172,7 +189,15 @@ void CDamageWindow::OnPaint()
 	// bitmap
 	CDC bmpDC;
 	auto ret = bmpDC.CreateCompatibleDC( &dc );
-	CBitmap *cbmp, *oldbmp = nullptr;
+	std::vector<CBitmap *> bitmaptable( IMAGENAME_ALLIMAGE_SIZE );
+	CBitmap *oldbmp = nullptr;
+
+	// cbmp を何度もFromHandleしてるせいか、2回目以降に同じ画像を表示するとバグるので、直す
+	// -> cbmpもvectorかmapにして最初に全部読み出し→保存しておく？
+	for ( int i = 0; i < m_img.size(); ++i )
+	{
+		bitmaptable[i] = CBitmap::FromHandle( m_img[i] );
+	}
 
 	// そもそも全部描画してスクロールさせるなら、サイズ気にせず全部描画しちゃえば…？
 	for ( int i = 0; i < sz; ++i )
@@ -182,24 +207,26 @@ void CDamageWindow::OnPaint()
 		strSQL.Format( _T( "select タイプ from move where 技名='%s'" ), m_printData[i].first ); // 技データベースの検索
 		rs.Open( CRecordset::forwardOnly, strSQL );
 		CString strType;
-		rs.GetFieldValue( (short)0, strType ); // select文で1つしか指定しない時はインデックスは0で良い？？(要確認)
+		rs.GetFieldValue( (short)0, strType );
+
+		// メンバ変数にスクロール位置とかを保存しておいて表示位置を計算しないとダメ！！！！！！！！！！！
+		// -> と思ったけど、スクロール位置はm_scrollDamageが持ってるんじゃないの？
+		//    m_scrollDamage.nPos * -40 みたいな補正すれば良いように思われる
 
 		/* 技のタイプアイコンを表示 */
 		int iWidth = 20;  // 幅、あとでちゃんと直す
 		int iHeight = 20; // 高さ、あとでちゃんと直す
 
-		cbmp = CBitmap::FromHandle( m_img[typetable[strType]] );
 		if ( oldbmp == nullptr )
 		{
-			oldbmp = bmpDC.SelectObject( cbmp );
+			oldbmp = bmpDC.SelectObject( bitmaptable[typetable[strType]] );
 		}
 		else
 		{
-			bmpDC.SelectObject( cbmp );
+			bmpDC.SelectObject( bitmaptable[typetable[strType]] );
 		}
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 		dc.StretchBlt( 10, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
-		cbmp->DeleteObject();
 
 		/* 技名のテキストを表示 */
 		CRect rect;
@@ -209,21 +236,19 @@ void CDamageWindow::OnPaint()
 		/* ダメージゲージのベース部分を表示 */
 		iWidth = 220;
 		iHeight = 16;
-		cbmp = CBitmap::FromHandle( m_img[IMAGENAME_GAUGE_GRAY] );
-		bmpDC.SelectObject( cbmp );
+		bmpDC.SelectObject( bitmaptable[IMAGENAME_GAUGE_GRAY] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 		dc.StretchBlt( 180, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
-		cbmp->DeleteObject();
 
 		/* ダメージゲージの乱数幅部分を表示 */ // -> ゲージの色はWikiを見て確認！！
 		// 乱数幅の方から描画して上から残りHP部分で上書きした方が楽だよね
 		UINT imgIndex = 0;
-		if ( m_defHP * 0.4 >= m_printData[i].second[15] )
+		if ( m_defHP * 0.4 >= m_printData[i].second[7] ) // だいたい真ん中辺り＝平均ダメージとして、これをベースにゲージの色を決める
 		{
 			// ダメージ40％以下の場合は緑ゲージ
 			imgIndex = IMAGENAME_GAUGE_GREEN;
 		}
-		else if ( m_defHP * 0.75 >= m_printData[i].second[15] )
+		else if ( m_defHP * 0.75 >= m_printData[i].second[7] )
 		{
 			// ダメージ75％以下の場合は黄色ゲージ
 			imgIndex = IMAGENAME_GAUGE_YELLOW;
@@ -236,22 +261,22 @@ void CDamageWindow::OnPaint()
 
 		iWidth = 220 * ( max( m_defHP - m_printData[i].second[0], 0 ) / (double)m_defHP ); // 表示する長さは残りHPによって変わるはず
 		iHeight = 14;
-		cbmp = CBitmap::FromHandle( m_img[imgIndex + 1] );
-		bmpDC.SelectObject( cbmp );
+		bmpDC.SelectObject( bitmaptable[imgIndex + 1] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
-		cbmp->DeleteObject();
 
 		/* ダメージゲージの残りHP部分を表示 */
 		iWidth = 220 * ( max( m_defHP - m_printData[i].second[15], 0 ) / (double)m_defHP ); // 確定で残る量を算出するので最大ダメージでゲージ量を計算
 		iHeight = 14;
-		cbmp = CBitmap::FromHandle( m_img[imgIndex] );
-		bmpDC.SelectObject( cbmp );
+		bmpDC.SelectObject( bitmaptable[imgIndex] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
 		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
-		cbmp->DeleteObject();
 	}
 
+	for ( int i = 0; i < bitmaptable.size(); ++i )
+	{
+		bitmaptable[i]->DeleteObject();
+	}
 	bmpDC.SelectObject( oldbmp );
 	bmpDC.DeleteDC();
 }

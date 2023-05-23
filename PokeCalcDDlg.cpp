@@ -385,8 +385,6 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	CRect rect;
 	GetClientRect( &rect );
 	InvalidateRect( rect );
-//	m_dlgDamageWindow[0].GetWindowRect( &rect );
-//	m_dlgDamageWindow[0].InvalidateRect( rect );
 
 	return ( 0 );
 }
