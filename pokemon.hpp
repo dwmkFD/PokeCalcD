@@ -18,6 +18,7 @@ public:
 	uint64_t m_item; // 持ち物
 	uint64_t m_rank; // ランク補正 -> これステータス毎に細かくしないとダメでしょ…
 	CString m_teraType; // テラスタイプ
+	uint64_t m_conditionAbnormaly; // 状態異常
 
 	void clear() {
 		m_barrier = 0;
@@ -63,6 +64,8 @@ public:
 	static constexpr uint64_t ABILITY_WATERBUBBLE    = 0x0000000002000000; // 水泡
 	static constexpr uint64_t ABILITY_RECKLESS       = 0x0000000004000000; // 捨て身
 	static constexpr uint64_t ABILITY_SANDFORCE      = 0x0000000008000000; // 砂の力
+
+	static constexpr uint64_t ABILITY_MERCILESS      = 0x0000000000000000; // 人でなし(ビット定義は後回し）
 	// まだ途中………
 
 	// アイテムビット定義
@@ -77,6 +80,15 @@ public:
 	static constexpr uint64_t ITEM_WISEGLASSES     = 0x0000000000002000; // ものしりメガネ
 	static constexpr uint64_t ITEM_HALFDAMAGEBERRY = 0x0000000000004000; // 半減実
 	static constexpr uint64_t ITEM_NORMALGEM       = 0x0000000000008000; // ノーマルジュエル
+
+	static constexpr uint64_t ITEM_SCOPELENS       = 0x0000000000000000; // ピントレンズ/するどいツメ(ビット定義は後回し）
+
+	// 状態異常ビット定義
+	static constexpr uint64_t CONDITION_POISON    = 0x01; // 毒・猛毒
+	static constexpr uint64_t CONDITION_BURN      = 0x02; // 火傷
+	static constexpr uint64_t CONDITION_PARALYSIS = 0x04; // 麻痺
+	static constexpr uint64_t CONDITION_SLEEP     = 0x08; // 眠り
+
 };
 
 // ポケモンのデータ

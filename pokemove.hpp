@@ -17,14 +17,13 @@ class PokeMove {
 public:
 	PokeMove() = default;
 
-	PokeMove( CString name, CString type, int category, int power, int accuracy, bool direct, int critical = 0 )
+	PokeMove( CString name, CString type, int category, int power, int accuracy, bool direct,
+			  bool bite = false, bool punch = false, int critical = 0, bool pulse = false, bool minimize = false, bool sound = false )
 	{
-		m_name = name; m_type = type; m_category = category;
-		m_power = power; m_accuracy = accuracy; m_direct = direct;
-		m_range = -1; m_critical = critical;
-		// 技DBを編集するまでは急所に当たりやすい技は無しとする
-		// 急所技だけじゃなくて、小さくなる相手に必中・威力2倍とか、顎技、音技…etcも必要
-		// -> 今のDBでも、説明文に書いてある気がするから、そこから拾う？
+		m_name = name; m_type = type; m_category = category; m_power = power;
+		m_accuracy = accuracy; m_direct = direct; m_range = -1;
+		m_bite = bite; m_punch = punch; m_critical = critical; m_pulse = pulse;
+		m_minimize = minimize; m_sound = sound;
 	}
 
 	void setRange( int range ) { m_range = range; }
@@ -46,7 +45,12 @@ public:
 	int m_accuracy; // 技の命中率
 	int m_range; // 技の範囲（単体 4096、全体および相手全体 3072 → ダブルで威力の判定に使用する） // 3072で良いかどうかは要調査！
 	bool m_direct; // 接触攻撃か否か（鮫肌とかの反撃で落ちるかどうかを計算結果に含むなら）
+	bool m_bite; // かみつき技か？
+	bool m_punch; // パンチ技か？
 	int m_critical; // 急所に当たりやすい技か？
+	bool m_pulse; // 波動技か？
+	bool m_minimize; // 小さくなるに対して効果がある技か？
+	bool m_sound; // 音技か？
 };
 
 // タイプ相性

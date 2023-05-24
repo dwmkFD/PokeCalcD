@@ -29,7 +29,22 @@ public:
 				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
 				// bit10: 達人の帯、
 
-	bool m_WonderRoom; // ワンダールーム
+	unsigned int m_battleStatus; // 場の状態
+	unsigned int m_fieldStatus;  // フィールド
+
+	// 場の状態ビット定義 ↑ワンダールーム別変数になってるけど、あとで修正する
+	static constexpr unsigned int BATTLE_STATUS_GRAVITY      = 0x01; // 重力
+	static constexpr unsigned int BATTLE_STATUS_WONDERROOM   = 0x02; // ワンダールーム
+	static constexpr unsigned int BATTLE_STATUS_PLASMASHOWER = 0x04; // プラズマシャワー
+	static constexpr unsigned int BATTLE_STATUS_FAIRYAURA    = 0x08; // フェアリーオーラ
+	static constexpr unsigned int BATTLE_STATUS_DARKAURA     = 0x10; // ダークオーラ
+	static constexpr unsigned int BATTLE_STATUS_AURABREAK    = 0x20; // オーラブレイク
+
+	// フィールド定義ビット
+	static constexpr unsigned int BATTLE_FIELD_ELECTRIC = 0x1; // エレキフィールド
+	static constexpr unsigned int BATTLE_FIELD_GRASSY   = 0x2; // グラスフィールド
+	static constexpr unsigned int BATTLE_FIELD_MISTY    = 0x4; // ミストフィールド
+	static constexpr unsigned int BATTLE_FIELD_PSYCHIC  = 0x8; // サイコフィールド
 
 	// ↓PokemonData側に移動させたんだけど、コンパイル通らなくなるので、修正完了まではこのままで
 	// 特性ビット定義
@@ -63,13 +78,13 @@ public:
 					rs.GetFieldValue( i, var[i] );
 				}
 
-				// var[0] : ID		var[1] : 技名
-				// var[2] : タイプ	var[3] : 分類
-				// var[4] : 威力	var[5] : 命中
-				// var[6] : PP		var[7] : 接触判定
-				// var[8] : 説明
+				// var[0] : ID			var[1] : 技名		var[2] : タイプ		var[3] : 分類
+				// var[4] : 威力		var[5] : 命中		var[6] : PP			var[7] : 接触判定
+				// var[8] : かみつき技	var[9] : パンチ技	var[10] : 急所技	var[11] : 波動技
+				// var[12] : 小さくなる	var[13] : 音		var[14] : 説明
 				m_moveDB[*var[1].m_pstring] = PokeMove( *var[1].m_pstring, *var[2].m_pstring, PokeMove::getCategory( *var[3].m_pstring ),
-											   var[4].m_lVal, var[5].m_lVal, var[7].m_boolVal );
+											   var[4].m_lVal, var[5].m_lVal, var[7].m_boolVal, var[8].m_boolVal, var[9].m_boolVal,
+											   var[10].m_iVal, var[11].m_boolVal, var[12].m_boolVal, var[13].m_boolVal );
 
 				rs.MoveNext();
 			}
@@ -83,37 +98,56 @@ public:
 		}
 	}
 
-	int correctPower( CString name, CBattleSettings option ) {
+	int correctPower( const CString name, const PokemonData &atk, const PokemonData &def, const CBattleSettings &option ) {
 		// 技の威力が変わる場合に補正する処理
 		int power = m_moveDB[name].m_power;
 
 		// サイコフィールドでワイドフォースを撃つ場合は威力2倍かつ全体技
+		// -> 技データベースの方を書き換えると面倒なのをどうするか…
+		if ( option.m_fieldStatus & CBattleSettings::BATTLE_FIELD_PSYCHIC )
+		{
+			if ( name == _T( "ワイドフォース" ) )
+			{
+				return ( power * 2 );
+			}
+		}
+
 		// エレキボール、ジャイロボールは素早さを比較して威力決定
+
+		// サイコブレイドはエレキフィールドで威力1.5倍
+
+		// イナズマドライブ/アクセルブレイクは弱点をつくと威力1.33倍
+
+		// 特性「テクニシャン」で威力60以下の技は威力1.5倍
+
+		// ミストフィールドでドラゴン技を使うと威力半減（ダメージ半減？どっち？）
+
 		// ヒートスタンプ、けたぐり、ヘビーボンバーは体重(差)によって威力決定
-		// 無天候と晴れ以外の天候でのソーラービームは威力半減(ソーラーブレードはどっちだっけ？)
+
+		// 無天候と晴れ以外の天候でのソーラービーム/ブレードは威力半減
 	}
 
-	double calcCriticalProbability( CString name, CBattleSettings option ) {
+	double calcCriticalProbability( const CString &name, const PokemonData &atk, const PokemonData &def ) {
 		// option条件下で急所に当たる確率を計算する
 		// -> 急所に当たりやすい技、急所ランク(作ってない気がする…)、持ち物などを考慮 -> option はPokemonData.opt の方にしないとダメだと思うけど、暫定で
 		double result = 1.0;
 		int rank = 0;
 		rank += m_moveDB[name].m_critical; // 急所に当たりやすい技なら、急所ランクを上げる(確定急所技は+3、それ以外は+1）
-/*
-		if ( option.m_ability & ABILITY_SUPERLUCK ) // 攻撃側の特性が強運
+
+		if ( atk.m_option.m_ability & PokemonDataSub::ABILITY_SUPERLUCK ) // 攻撃側の特性が強運
 		{
 			++rank;
 		}
-		if ( ( option.m_ability & ABILITY_MERCILESS ) // 攻撃側の特性が人でなしで、
-			&& ( option.m_poison ) ) // 防御側が毒/猛毒状態
+		if ( ( atk.m_option.m_ability & PokemonDataSub::ABILITY_MERCILESS ) // 攻撃側の特性が人でなしで、
+			&& ( def.m_option.m_conditionAbnormaly & PokemonDataSub::CONDITION_POISON ) ) // 防御側が毒/猛毒状態
 		{
 			rank += 3;
 		}
-		if ( option.m_item & ITEM_SCOPELENS ) // ピントレンズ/するどいツメを持っている
+		if ( atk.m_option.m_item & PokemonDataSub::ITEM_SCOPELENS ) // ピントレンズ/するどいツメを持っている
 		{
 			++rank;
 		}
-*/
+
 		// rank >= 3 なら確定急所
 		if ( rank >= 2 )
 		{
@@ -147,6 +181,8 @@ public:
 				// この技のダメージは計算済みなのでスキップ
 				continue;
 			}
+
+			// ↓↓↓ダメージ計算式にフィールドの補正が入ってないけど、どこで補正されるんだ…？？？
 
 			// ダメージ計算式↓
 			//  (((レベル×2/5+2)×威力×A/D)/50+2)×範囲補正×おやこあい補正×天気補正×急所補正×乱数補正×タイプ一致補正×相性補正×やけど補正×M×Mprotect
@@ -197,7 +233,7 @@ public:
 			// 攻撃・特攻と防御・特防を比較して、一番ダメージが大きくなるようにA/Dを決めるんだっけ？
 
 			// STEP1-3. ワンダールームの場合はDを再計算する処理を入れる（防御と特防を入れ替える）
-			if ( option.m_WonderRoom )
+			if ( option.m_battleStatus & CBattleSettings::BATTLE_STATUS_WONDERROOM )
 			{
 				long long A_dummy = 1;
 				D = 1; // Aは変わらないのでダミーで計算して結果は捨て、Dはここでの結果を採用する
@@ -261,6 +297,9 @@ public:
 				D_critical = D; // 急所に当たる場合、有利(防御側の防御ランク低下)な効果だけ残す
 			}
 
+			/* STEP2-3. ランク補正とは別のステータス上昇(総大将、クォークチャージ、古代活性、ハドロンエンジン、ヒヒイロの鼓動) */
+			// -> これはPokemonDataの数値でもらう仕様にしたんだっけ？
+
 			/* STEP2-LAST. 計算した威力を使って残りを計算 */
 			auto damage_base = [&]( const long long a, const long long d, const int p, long long &dmg ) {
 				dmg = dmg * ( p * a ) / d; dmg = ( dmg / 4096 ) * 4096;
@@ -289,11 +328,20 @@ public:
 						dmg += 2047;
 						dmg /= 4096;
 					}
-					else if ( m_moveDB[atkmove].m_type == _T( "みず" ) ) // -> ウネルミナモの専用技は晴れでも威力1.5倍だった気がする
+					else if ( m_moveDB[atkmove].m_type == _T( "みず" ) ) // -> ウネルミナモの専用技は晴れでも威力1.5倍だった気がする -> 威力？ダメージ？ここで補正して良い？
 					{
-						dmg *= 2048;
-						dmg += 2047;
-						dmg /= 4096;
+						if ( atkmove == _T( "ハイドロスチーム" ) )
+						{
+							dmg *= ( 4096 + 2048 );
+							dmg += 2047;
+							dmg /= 4096;
+						}
+						else
+						{
+							dmg *= 2048;
+							dmg += 2047;
+							dmg /= 4096;
+						}
 					}
 				}
 				else if ( option.m_weather == 2 )
@@ -627,12 +675,12 @@ public:
 			for ( int i = 0; i < 16; ++i )
 			{
 				// 基本ダメージは、計算結果 × 急所に"当たらない"確率 × 技の命中率
-				tmp_exp += ( tmpres2[i] / 16.0 ) * ( 1.0 - calcCriticalProbability( atkmove, option ) ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
+				tmp_exp += ( tmpres2[i] / 16.0 ) * ( 1.0 - calcCriticalProbability( atkmove, atk, def ) ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
 			}
 			for ( int i = 16; i < 32; ++i )
 			{
 				// 急所に当たった場合のダメージは、計算結果 × 急所に"当たる"確率 × 技の命中率
-				tmp_exp += ( tmpres2[i] / 16.0 ) * calcCriticalProbability( atkmove, option ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
+				tmp_exp += ( tmpres2[i] / 16.0 ) * calcCriticalProbability( atkmove, atk, def ) * ( m_moveDB[atkmove].m_accuracy / 100.0 );
 			}
 			tmpres2[32] = (int)tmp_exp;
 
