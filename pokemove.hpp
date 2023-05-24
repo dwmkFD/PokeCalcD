@@ -65,7 +65,7 @@ struct TypeCompatibility {
 		m_typetable = pt.getTypeTable();
 
 		// タイプ相性を計算するテーブル
-		m_table.assign( 18, std::vector<double>( 18, 1 ) );
+		m_table.assign( 19, std::vector<double>( 19, 1 ) );
 
 		// ノーマル（弱点：なし、半減：いわ・はがね、無効：ゴースト）
 		m_table[m_typetable[_T( "ノーマル" )]][m_typetable[_T( "いわ" )]]

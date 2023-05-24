@@ -22,6 +22,7 @@ public:
 		m_typetable[_T( "いわ" )] = 12; m_typetable[_T( "ゴースト" )] = 13;
 		m_typetable[_T( "ドラゴン" )] = 14; m_typetable[_T( "あく" )] = 15;
 		m_typetable[_T( "はがね" )] = 16; m_typetable[_T( "フェアリー" )] = 17;
+		m_typetable[_T( "テラスタイプ" )] = 18; // テラスタイプ未選択の場合、ノーマルと区別が付かなくなるので入れておく(使うことは無いと思う)
 	}
 
 	std::map<CString, int> &getTypeTable() { return ( m_typetable ); }

@@ -335,25 +335,41 @@ public:
 
 			/* STEP8. タイプ一致補正 */
 			// -> テラスタイプ一致の計算もここでやる？
+			// テラバーストはテラスタルしている場合は必ずタイプ一致(未実装)、テラスタルしていなければノーマルでタイプ一致、ノーマルタイプがノーマルにテラスタルした時は…？
+			// そういえば、フライングプレスは「格闘」でタイプ一致判定するんだっけ？(ルチャブル専用技だった気がするから、いずれにせよタイプ一致だが、飛行にテラスタルすると事情が変わる…）
+			atk.m_type.emplace_back( atk.m_option.m_teraType ); // テラスタイプも追加して判定する
+			long long type_match_attack = 0;
 			for ( auto &&type : atk.m_type )
 			{
 				if ( type == m_moveDB[atkmove].m_type )
 				{
-					for ( int i = 0; i < 32; ++i )
-					{
-						tmpresult[i] *= ( 4096 + 2048 );
-						tmpresult[i] /= 4096;
-						tmpresult[i] += 2047;
-						tmpresult[i] /= 4096; tmpresult[i] *= 4096;
-					}
+					type_match_attack += 2048;
 				}
 			}
 
+			for ( int i = 0; i < 32; ++i )
+			{
+				tmpresult[i] *= ( 4096 + type_match_attack ); // タイプ不一致なら1.0倍、タイプ一致なら1.5倍、テラスタイプ一致なら2.0倍になる
+				tmpresult[i] /= 4096;
+				tmpresult[i] += 2047;
+				tmpresult[i] /= 4096; tmpresult[i] *= 4096;
+			}
+			atk.m_type.pop_back(); // 追加したテラスタイプを一応削除しておく
+
 			/* STEP9. 相性補正 */
 			double typecomp_res = 1.0;
-			for ( auto &&type : def.m_type )
+			if ( def.m_option.m_teraType.IsEmpty() == FALSE )
 			{
-				typecomp_res *= m_typecomp.check( m_moveDB[atkmove].m_type, type );
+				// 防御側にテラスタイプが設定されている場合は、相性はテラスタイプを使って計算する
+				typecomp_res *= m_typecomp.check( m_moveDB[atkmove].m_type, def.m_option.m_teraType );
+			}
+			else
+			{
+				// テラスタイプ未設定の場合は、本来持つタイプで計算する
+				for ( auto &&type : def.m_type )
+				{
+					typecomp_res *= m_typecomp.check( m_moveDB[atkmove].m_type, type );
+				}
 			}
 			for ( int i = 0; i < 32; ++i ) // STEP毎に32回のループ書くの微妙なんだけどね…
 			{
@@ -401,7 +417,7 @@ public:
 			/* STEP11-2. ブレインフォース補正は第九世代には存在しない */
 
 			/* STEP11-3. スナイパー補正 */
-			if ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( atk.m_option.m_ability & PokemonDataSub::ABILITY_SNIPER )
 			{
 				for ( int i = 16; i < 32; ++i ) // 急所に当たった時、更に威力が1.5倍
 				{
@@ -412,7 +428,7 @@ public:
 			}
 
 			/* STEP11-4. いろめがね補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( atk.m_option.m_ability & PokemonDataSub::ABILITY_TINTLENS )
 				&& ( typecomp_res < 1.0 ) )
 			{
 				for ( int i = 0; i < 32; ++i )
@@ -425,12 +441,12 @@ public:
 			}
 
 			/* STEP11-5. もふもふ(炎技被弾)補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FLUFFY_FLARE )
 				&& ( m_moveDB[atkmove].m_type == _T( "ほのお" ) ) )
 			{
 				for ( int i = 0; i < 32; ++i )
 				{
-					// 特性もふもふで炎技を被弾した場合はダメージ2倍
+					// 特性もふもふで炎技を被弾した場合はダメージ2倍(ただし弱点ではない)
 					// これは防御側の特性を参照するので実装に注意！！！！！
 					tmpresult[i] *= 8192;
 					tmpresult[i] += 2048;
@@ -440,7 +456,7 @@ public:
 
 			/* STEP11-6. Mhalf補正 */
 			/* STEP11-6-1. 氷の鱗粉補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_ICE_SCALES )
 				&& ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK ) )
 			{
 				// 氷の鱗粉で特殊技を受ける時はダメージ半減
@@ -453,7 +469,7 @@ public:
 			}
 
 			/* STEP11-6-2. ファントムガード、マルチスケイル補正 */
-			if ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( def.m_option.m_ability & PokemonDataSub::ABILITY_SHADOWSHIELD )
 			{
 				// ファントムガード、マルチスケイルが発動する時はダメージ半減
 				// -> ツールとしてはチェックボックスのON/OFFで切り替えるのでHP判定はしない
