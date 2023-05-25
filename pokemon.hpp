@@ -38,7 +38,8 @@ public:
 	static constexpr uint64_t ABILITY_SHADOWSHIELD   = 0x0000000000000080; // ファントムガード
 	static constexpr uint64_t ABILITY_MULTISCALE     = 0x0000000000000100; // マルチスケイル
 	static constexpr uint64_t ABILITY_FLUFFY_DIRECT  = 0x0000000000000200; // もふもふ(接触技)
-	static constexpr uint64_t ABILITY_FILTER         = 0x0000000000000400; // ハードロック/フィルター
+	static constexpr uint64_t ABILITY_FILTER         = 0x0000000000000400; // フィルター
+	static constexpr uint64_t ABILITY_SOLIDROCK      = 0x0000000000000400; // ハードロック
 	static constexpr uint64_t ABILITY_PRISMARMOR     = 0x0000000000000800; // プリズムアーマー
 	static constexpr uint64_t ABILITY_LONGREACH      = 0x0000000000001000; // 遠隔
 	static constexpr uint64_t ABILITY_NORMALIZE      = 0x0000000000002000; // ノーマルスキン
@@ -48,7 +49,8 @@ public:
 	static constexpr uint64_t ABILITY_PIXILATE       = 0x0000000000020000; // フェアリースキン
 	static constexpr uint64_t ABILITY_ANALYTIC       = 0x0000000000040000; // アナライズ
 	static constexpr uint64_t ABILITY_LIQUIDVOICE    = 0x0000000000080000; // うるおいボイス
-	static constexpr uint64_t ABILITY_AIRLOCK        = 0x0000000000100000; // エアロック/ノー天気
+	static constexpr uint64_t ABILITY_AIRLOCK        = 0x0000000000100000; // エアロック
+	static constexpr uint64_t ABILITY_CLOUDNINE      = 0x0000000000100000; // ノー天気
 	static constexpr uint64_t ABILITY_TOUGHCLAWS     = 0x0000000000200000; // 硬い爪 // memo: 5325/4096
 	static constexpr uint64_t ABILITY_STRONGJAW      = 0x0000000000400000; // 頑丈顎
 	static constexpr uint64_t ABILITY_SCRAPPY        = 0x0000000000800000; // 肝っ玉
@@ -56,7 +58,8 @@ public:
 	static constexpr uint64_t ABILITY_TORRENT        = 0x0000000000200000; // 激流
 	static constexpr uint64_t ABILITY_OVERGROW       = 0x0000000000400000; // 新緑
 	static constexpr uint64_t ABILITY_BLAZE          = 0x0000000000800000; // 猛火
-	static constexpr uint64_t ABILITY_PROTEAN        = 0x0000000001000000; // 変幻自在/リベロ
+	static constexpr uint64_t ABILITY_PROTEAN        = 0x0000000001000000; // 変幻自在
+	static constexpr uint64_t ABILITY_LIBERO         = 0x0000000001000000; // リベロ
 	static constexpr uint64_t ABILITY_GORILLATACTICS = 0x0000000002000000; // 五里霧中
 	static constexpr uint64_t ABILITY_GUTS           = 0x0000000004000000; // 根性
 	static constexpr uint64_t ABILITY_SOLARPOWER     = 0x0000000008000000; // サンパワー
@@ -64,9 +67,30 @@ public:
 	static constexpr uint64_t ABILITY_WATERBUBBLE    = 0x0000000002000000; // 水泡
 	static constexpr uint64_t ABILITY_RECKLESS       = 0x0000000004000000; // 捨て身
 	static constexpr uint64_t ABILITY_SANDFORCE      = 0x0000000008000000; // 砂の力
-
-	static constexpr uint64_t ABILITY_MERCILESS      = 0x0000000000000000; // 人でなし(ビット定義は後回し）
-	// まだ途中………
+	static constexpr uint64_t ABILITY_INFILTRATOR    = 0x0000000010000000; // すり抜け
+	static constexpr uint64_t ABILITY_SLOWSTART      = 0x0000000020000000; // スロースタート
+	static constexpr uint64_t ABILITY_SHEERFORCE     = 0x0000000040000000; // 力づく
+	static constexpr uint64_t ABILITY_HUGEPOWER      = 0x0000000080000000; // 力持ち
+	static constexpr uint64_t ABILITY_PUREPOWER      = 0x0000000080000000; // ヨガパワー
+	static constexpr uint64_t ABILITY_TECHNICIAN     = 0x0000000100000000; // テクニシャン
+	static constexpr uint64_t ABILITY_ADAPTABILITY   = 0x0000000200000000; // 適応力 
+	static constexpr uint64_t ABILITY_IRONFIST       = 0x0000000400000000; // てつのこぶし
+	static constexpr uint64_t ABILITY_UNAWARE        = 0x0000000800000000; // 天然
+	static constexpr uint64_t ABILITY_TOXICBOOST     = 0x0000001000000000; // 毒暴走
+	static constexpr uint64_t ABILITY_TRANSISTOR     = 0x0000002000000000; // トランジスタ
+	static constexpr uint64_t ABILITY_FLAREBOOST     = 0x0000004000000000; // 熱暴走
+	static constexpr uint64_t ABILITY_STEELWORKER    = 0x0000008000000000; // 鋼使い
+	static constexpr uint64_t ABILITY_STEELYSPIRIT   = 0x0000010000000000; // 鋼の精神
+	static constexpr uint64_t ABILITY_HUSTLE         = 0x0000020000000000; // 張り切り
+	static constexpr uint64_t ABILITY_PLUSMINUS      = 0x0000040000000000; // プラス/マイナス
+	static constexpr uint64_t ABILITY_SWARM          = 0x0000080000000000; // むしのしらせ
+	static constexpr uint64_t ABILITY_MEGALAUNCHER   = 0x0000100000000000; // メガランチャー
+	static constexpr uint64_t ABILITY_FLASHFIRE      = 0x0000200000000000; // 貰い火
+	static constexpr uint64_t ABILITY_DEFEATIST      = 0x0000400000000000; // 弱気
+	static constexpr uint64_t ABILITY_DRAGONSMAW     = 0x0000800000000000; // 龍のあぎと
+	static constexpr uint64_t ABILITY_ROCKYPAYLOAD   = 0x0001000000000000; // 岩運び
+	static constexpr uint64_t ABILITY_MERCILESS      = 0x0002000000000000; // 人でなし
+	// まだある………？
 
 	// アイテムビット定義
 	static constexpr uint64_t ITEM_METRONOME       = 0x000000000000003F; // メトロノームN回目
@@ -80,8 +104,20 @@ public:
 	static constexpr uint64_t ITEM_WISEGLASSES     = 0x0000000000002000; // ものしりメガネ
 	static constexpr uint64_t ITEM_HALFDAMAGEBERRY = 0x0000000000004000; // 半減実
 	static constexpr uint64_t ITEM_NORMALGEM       = 0x0000000000008000; // ノーマルジュエル
-
-	static constexpr uint64_t ITEM_SCOPELENS       = 0x0000000000000000; // ピントレンズ/するどいツメ(ビット定義は後回し）
+	static constexpr uint64_t ITEM_LIGHTBALL       = 0x0000000000010000; // 電気玉
+	static constexpr uint64_t ITEM_LEEK            = 0x0000000000020000; // 長ネギ
+	static constexpr uint64_t ITEM_GRISEOUSORB     = 0x0000000000040000; // 白金玉
+	static constexpr uint64_t ITEM_THICKCLUB       = 0x0000000000080000; // ふといホネ
+	static constexpr uint64_t ITEM_LUCKYPUNCH      = 0x0000000000100000; // ラッキーパンチ
+	static constexpr uint64_t ITEM_A = 0x0000000000200000; // オボンのみ
+	static constexpr uint64_t ITEM_B = 0x0000000000400000; // きあいのタスキ
+	static constexpr uint64_t ITEM_C = 0x0000000000800000; // くろいてっきゅう
+	static constexpr uint64_t ITEM_D = 0x0000000001000000; // しんかいの鱗
+	static constexpr uint64_t ITEM_E = 0x0000000002000000; // しんかのきせき
+	static constexpr uint64_t ITEM_F = 0x0000000004000000; // 食べ残し
+	static constexpr uint64_t ITEM_G = 0x0000000008000000; // とつげきチョッキ
+	static constexpr uint64_t ITEM_H = 0x0000000010000000; // メタルパウダー
+	static constexpr uint64_t ITEM_SCOPELENS       = 0x0000000020000000; // ピントレンズ/するどいツメ
 
 	// 状態異常ビット定義
 	static constexpr uint64_t CONDITION_POISON    = 0x01; // 毒・猛毒
