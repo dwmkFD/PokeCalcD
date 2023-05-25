@@ -12,8 +12,7 @@
 IMPLEMENT_DYNAMIC(CDamageWindow, CDialogEx)
 
 CDamageWindow::CDamageWindow(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_DAMAGE_WINDOW, pParent),
-	m_img( IMAGENAME_ALLIMAGE_SIZE )
+	: CDialogEx(IDD_DAMAGE_WINDOW, pParent)
 {
 }
 
@@ -54,6 +53,7 @@ BOOL CDamageWindow::OnInitDialog()
 	scrollinfo.nMax = 0;
 	m_scrollDamage.SetScrollInfo( &scrollinfo );
 
+#if 0
 	// 表示に必要な画像をロードする
 	std::vector<CString> picname = {
 			_T( "normal.png" ), _T( "flare.png" ), _T( "water.png" ), _T( "electric.png" ),
@@ -83,6 +83,7 @@ BOOL CDamageWindow::OnInitDialog()
 
 		auto ret = m_img[cnt++].Load( strPath );
 	}
+#endif
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 例外 : OCX プロパティ ページは必ず FALSE を返します。
@@ -200,6 +201,37 @@ void CDamageWindow::OnPaint()
 	std::vector<CBitmap *> bitmaptable( IMAGENAME_ALLIMAGE_SIZE );
 	CBitmap *oldbmp = nullptr;
 
+	// 表示に必要な画像をロードする -> 重いんだけど、毎回ロードしないと何故か2回目以降の画像表示に失敗する。。
+	std::vector<CImage> m_img( IMAGENAME_ALLIMAGE_SIZE ); // 表示する画像
+	std::vector<CString> picname = {
+			_T( "normal.png" ), _T( "flare.png" ), _T( "water.png" ), _T( "electric.png" ),
+			_T( "grass.png" ), _T( "ice.png" ), _T( "fighting.png" ), _T( "poison.png" ),
+			_T( "ground.png" ), _T( "flying.png" ), _T( "psychic.png" ), _T( "bug.png" ),
+			_T( "rock.png" ), _T( "ghost.png" ), _T( "dragon.png" ), _T( "dark.png" ),
+			_T( "steel.png" ), _T( "fairy.png" ),
+
+			_T( "normal_tera.png" ), _T( "flare_tera.png" ), _T( "water_tera.png" ), _T( "electric_tera.png" ),
+			_T( "grass_tera.png" ), _T( "ice_tera.png" ), _T( "fighting_tera.png" ), _T( "poison_tera.png" ),
+			_T( "ground_tera.png" ), _T( "flying_tera.png" ), _T( "psychic_tera.png" ), _T( "bug_tera.png" ),
+			_T( "rock_tera.png" ), _T( "ghost_tera.png" ), _T( "dragon_tera.png" ), _T( "dark_tera.png" ),
+			_T( "steel_tera.png" ), _T( "fairy_tera.png" ),
+
+			_T( "gray.bmp" ),
+			_T( "red.bmp" ), _T( "red_random.bmp" ),
+			_T( "yellow.bmp" ), _T( "yellow_random.bmp" ),
+			_T( "green.bmp" ), _T( "green_random.bmp" ),
+	};
+	CString strPath;
+	TCHAR buf[2048] = { 0 };
+	int cnt = 0;
+	GetCurrentDirectory( sizeof( buf ), buf );
+	for ( auto &&filename : picname )
+	{
+		strPath.Format( _T( "%s\\pic\\%s" ), buf, filename );
+
+		auto ret = m_img[cnt++].Load( strPath );
+	}
+
 	// cbmp を何度もFromHandleしてるせいか、2回目以降に同じ画像を表示するとバグるので、直す
 	// -> cbmpもvectorかmapにして最初に全部読み出し→保存しておく？
 	for ( int i = 0; i < m_img.size(); ++i )
@@ -224,11 +256,15 @@ void CDamageWindow::OnPaint()
 		/* 技のタイプアイコンを表示 */
 		int iWidth = 20;  // 幅、あとでちゃんと直す
 		int iHeight = 20; // 高さ、あとでちゃんと直す
+//		m_img[typetable[strType]].BitBlt( dc, 10, 10 + i * 40, iWidth, iHeight, 0, 0, SRCCOPY ); // -> これダメでした。。
 
 		// テラスタイプと一致する場合はアイコン変えたい（つまりテラバーストは常にテラスタイプアイコンになるね、別に良いけど）
 		// -> 元タイプとも一致する、完全なテラスタイプ一致はもうちょっと強調してあげたい気もする…（一致補正2倍だから）
 		if ( oldbmp == nullptr )
 		{
+			// 2回目以降の描画でSelectObjectが失敗する…
+			// bitmaptableも保存しておかないとダメ？？
+			// -> 初回と2回目でポインタが違うか？を調べて、違うなら保存した方が良さそう？？
 			oldbmp = bmpDC.SelectObject( bitmaptable[typetable[strType]] );
 		}
 		else
