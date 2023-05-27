@@ -30,6 +30,8 @@ public:
 
 private:
 	CDatabase *m_database;
+	CScrollBar m_scrollDamage;
+	int m_scrollPos;
 
 	// ゲージの色
 	enum {
@@ -53,11 +55,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	void setDatabase( CDatabase *db ) { m_database = db; }
-	void setScrollInfo( unsigned int size );
+	void setScrollSize( unsigned int size );
 	void setDamageInfo( std::map<CString, std::vector<int>> &damage, int defHP ); // ダメージ情報を設定する
 	void printDamage( UINT startPos ); // ダメージゲージを描画する
 
-	CScrollBar m_scrollDamage;
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 	virtual BOOL OnInitDialog();
 	afx_msg BOOL OnMouseWheel( UINT nFlags, short zDelta, CPoint pt );

@@ -402,9 +402,9 @@ void CPokeDataDlg::AllCalcStatus()
 	// それ以外：{(種族値×2+個体値+努力値÷4)×レベル÷100+5}×せいかく補正
 
 	try {
+		CString strValue;
 		for ( int i = 4; i < 10; ++i ) // 何番目のフィールドかはデータベース見て直値で入れておく（本当は良くないけど…）
 		{
-			CString strValue;
 			rs.GetFieldValue( i, strValue );
 			m_editStatus[i - 4] = strValue; // 実数値には、まず種族値をそのまま入力する
 		}
@@ -468,33 +468,40 @@ void CPokeDataDlg::AllCalcStatus()
 		}
 
 		// データベースから拾った情報も保存
-		CString strInfo;
-		rs.GetFieldValue( 11, strInfo );
-		m_pokemon.m_Height = _tcstol( strInfo, nullptr, 10 ); // 高さ
-		rs.GetFieldValue( 12, strInfo );
-		m_pokemon.m_Weight = _tcstol( strInfo, nullptr, 10 ); // 重さ
+		rs.GetFieldValue( 11, strValue );
+		m_pokemon.m_Height = _tcstol( strValue, nullptr, 10 ); // 高さ
+		rs.GetFieldValue( 12, strValue );
+		m_pokemon.m_Weight = _tcstol( strValue, nullptr, 10 ); // 重さ
+
+		// 特性コンボボックスを空にする
+		while ( m_cmbAbility.GetCount() > 0 )
+		{
+			m_cmbAbility.DeleteString( 0 );
+		}
+		m_cmbAbility.AddString( _T( "(未発動)" ) ); // 未発動を入れる
 		for ( int i = 0; i < 3; ++i )
 		{
-			rs.GetFieldValue( 13 + i, strInfo );
-			if ( strInfo.IsEmpty() == FALSE )
+			rs.GetFieldValue( 13 + i, strValue );
+			if ( strValue.IsEmpty() == FALSE )
 			{
-				m_pokemon.m_ability.emplace_back( strInfo ); // 特性
+				m_pokemon.m_ability.emplace_back( strValue ); // 特性
+				m_cmbAbility.AddString( strValue ); // コンボボックスにも反映
 			}
 		}
 		for ( int i = 0; i < 2; ++i )
 		{
-			rs.GetFieldValue( 2 + i, strInfo );
-			if ( strInfo.IsEmpty() == FALSE )
+			rs.GetFieldValue( 2 + i, strValue );
+			if ( strValue.IsEmpty() == FALSE )
 			{
-				m_pokemon.m_type.emplace_back( strInfo ); // タイプ
+				m_pokemon.m_type.emplace_back( strValue ); // タイプ
 			}
 		}
 		for ( int i = 0; i < rs.GetODBCFieldCount(); ++i )
 		{
-			rs.GetFieldValue( 16 + i, strInfo );
-			if ( strInfo.IsEmpty() == FALSE )
+			rs.GetFieldValue( 16 + i, strValue );
+			if ( strValue.IsEmpty() == FALSE )
 			{
-				m_pokemon.m_move.emplace_back( strInfo ); // 覚える技
+				m_pokemon.m_move.emplace_back( strValue ); // 覚える技
 			}
 			else
 			{

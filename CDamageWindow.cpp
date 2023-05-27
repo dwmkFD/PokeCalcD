@@ -6,6 +6,7 @@
 #include "CDamageWindow.h"
 #include "afxdialogex.h"
 
+#include <algorithm>
 
 // CDamageWindow ダイアログ
 
@@ -96,11 +97,13 @@ void CDamageWindow::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 	switch ( nSBCode )
 	{
 		case SB_LINEUP:
-//			ScrollWindow( 0, -10 );
+			m_scrollPos += 10;
+//			std::clamp( m_scrollPos, 50 - minpos, maxpos - 50 );
 			break;
 
 		case SB_LINEDOWN:
-//			ScrollWindow( 0, 10 );
+			m_scrollPos -= 10;
+//			std::clamp( m_scrollPos, 50 - minpos, maxpos - 50 );
 			break;
 
 		case SB_THUMBPOSITION:
@@ -115,6 +118,10 @@ void CDamageWindow::OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar )
 		default:
 			break;
 	}
+
+	CRect rect;
+	GetClientRect( &rect );
+	InvalidateRect( &rect );
 
 	CDialogEx::OnVScroll( nSBCode, nPos, pScrollBar );
 }
@@ -137,15 +144,12 @@ BOOL CDamageWindow::OnMouseWheel( UINT nFlags, short zDelta, CPoint pt )
 
 
 // ダメージ計算結果をsize個表示するためのスクロールバー設定
-void CDamageWindow::setScrollInfo( unsigned int size )
+void CDamageWindow::setScrollSize( unsigned int size )
 {
-	// ここはむしろスクロール量の調整の方をやりたい
-	// 技候補が少ない時はスライダーは長く、技候補が多い時はスライダーは短くなるはず…
-
 	SCROLLINFO scrollinfo = { 0 };
 	m_scrollDamage.GetScrollInfo( &scrollinfo );
 	scrollinfo.nMin = 0;
-	scrollinfo.nMax = size;	// ここの値は個数分で良いのか…？
+	scrollinfo.nMax = size * 50; // 技1つにつき50pxくらいあるので
 	m_scrollDamage.SetScrollInfo( &scrollinfo );
 }
 
@@ -154,7 +158,7 @@ void CDamageWindow::setDamageInfo( std::map<CString, std::vector<int>> &damage, 
 {
 	// mapの時点でソートしておくのは難しそうだから、ここで一回詰め直したい
 	// →出力を、ダメージが大きい順にしてあげた方が良いよね、というお気持ち
-	// もしこっちのダイアログでダメージ計算するなら、この処理も表示処理の方に移動させるべし
+	m_printData.clear(); // 前の計算結果が残っている可能性があるのでクリアする
 	std::vector<std::pair<CString, int>> tmpMoveName;
 	for ( auto &&it : damage )
 	{
@@ -272,11 +276,11 @@ void CDamageWindow::OnPaint()
 			bmpDC.SelectObject( bitmaptable[typetable[strType]] );
 		}
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-		dc.StretchBlt( 10, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 10, 10 + i * 40 + m_scrollPos, iWidth, iHeight, &bmpDC, 0, 0, m_img[typetable[strType]].GetWidth(), m_img[typetable[strType]].GetHeight(), SRCCOPY );
 
 		/* 技名のテキストを表示 */
 		CRect rect;
-		rect.SetRect( 35, 10 + i * 40, 170, 26 + i * 40 );
+		rect.SetRect( 35, 10 + i * 40 + m_scrollPos, 170, 26 + i * 40 );
 		dc.DrawText( m_printData[i].first, rect, 0 );
 
 		/* ダメージゲージのベース部分を表示 */
@@ -284,7 +288,7 @@ void CDamageWindow::OnPaint()
 		iHeight = 16;
 		bmpDC.SelectObject( bitmaptable[IMAGENAME_GAUGE_GRAY] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-		dc.StretchBlt( 180, 10 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 180, 10 + i * 40 + m_scrollPos, iWidth, iHeight, &bmpDC, 0, 0, m_img[IMAGENAME_GAUGE_GRAY].GetWidth(), m_img[IMAGENAME_GAUGE_GRAY].GetHeight(), SRCCOPY );
 
 		/* ダメージゲージの乱数幅部分を表示 */ // -> ゲージの色はWikiを見て確認！！
 		// 乱数幅の方から描画して上から残りHP部分で上書きした方が楽だよね
@@ -309,17 +313,17 @@ void CDamageWindow::OnPaint()
 		iHeight = 14;
 		bmpDC.SelectObject( bitmaptable[imgIndex + 1] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 181, 11 + i * 40 + m_scrollPos, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex + 1].GetWidth(), m_img[imgIndex + 1].GetHeight(), SRCCOPY );
 
 		/* ダメージゲージの残りHP部分を表示 */
 		iWidth = 220 * ( max( m_defHP - m_printData[i].second[15], 0 ) / (double)m_defHP ); // 確定で残る量を算出するので最大ダメージでゲージ量を計算
 		iHeight = 14;
 		bmpDC.SelectObject( bitmaptable[imgIndex] );
 		dc.SetStretchBltMode( STRETCH_HALFTONE );
-		dc.StretchBlt( 181, 11 + i * 40, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
+		dc.StretchBlt( 181, 11 + i * 40 + m_scrollPos, iWidth, iHeight, &bmpDC, 0, 0, m_img[imgIndex].GetWidth(), m_img[imgIndex].GetHeight(), SRCCOPY );
 
 		/* 急所に当たらなかった場合のダメージ範囲をゲージの下に出したい */
-		rect.SetRect( 180, 30 + i * 40, 450, 46 + i * 40 );
+		rect.SetRect( 180, 30 + i * 40 + m_scrollPos, 450, 46 + i * 40 );
 		CString strDamageRange;
 		strDamageRange.Format( _T( "%.1lf％ ～ %.1lf％（期待値：%.1lf）" ),
 							   m_printData[i].second[0] / (double)m_defHP * 100,

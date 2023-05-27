@@ -380,6 +380,9 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	m_dlgDamageWindow[0].setDamageInfo( damage_result1, pokemon2.m_status[PokemonData::HP_Index] );
 	m_dlgDamageWindow[1].setDamageInfo( damage_result2, pokemon1.m_status[PokemonData::HP_Index] );
 
+	m_dlgDamageWindow[0].setScrollSize( damage_result1.size() );
+	m_dlgDamageWindow[1].setScrollSize( damage_result2.size() );
+
 	CRect rect;
 	GetClientRect( &rect );
 	InvalidateRect( rect );
