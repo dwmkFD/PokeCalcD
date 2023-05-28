@@ -253,22 +253,14 @@ void CDamageWindow::OnPaint()
 		CString strType;
 		rs.GetFieldValue( (short)0, strType );
 
-		// メンバ変数にスクロール位置とかを保存しておいて表示位置を計算しないとダメ！！！！！！！！！！！
-		// -> と思ったけど、スクロール位置はm_scrollDamageが持ってるんじゃないの？
-		//    m_scrollDamage.nPos * -40 みたいな補正すれば良いように思われる
-
 		/* 技のタイプアイコンを表示 */
 		int iWidth = 20;  // 幅、あとでちゃんと直す
 		int iHeight = 20; // 高さ、あとでちゃんと直す
-//		m_img[typetable[strType]].BitBlt( dc, 10, 10 + i * 40, iWidth, iHeight, 0, 0, SRCCOPY ); // -> これダメでした。。
 
 		// テラスタイプと一致する場合はアイコン変えたい（つまりテラバーストは常にテラスタイプアイコンになるね、別に良いけど）
 		// -> 元タイプとも一致する、完全なテラスタイプ一致はもうちょっと強調してあげたい気もする…（一致補正2倍だから）
 		if ( oldbmp == nullptr )
 		{
-			// 2回目以降の描画でSelectObjectが失敗する…
-			// bitmaptableも保存しておかないとダメ？？
-			// -> 初回と2回目でポインタが違うか？を調べて、違うなら保存した方が良さそう？？
 			oldbmp = bmpDC.SelectObject( bitmaptable[typetable[strType]] );
 		}
 		else
@@ -330,6 +322,9 @@ void CDamageWindow::OnPaint()
 							   m_printData[i].second[15] / (double)m_defHP * 100,
 							   m_printData[i].second[32] / (double)m_defHP * 100 );
 		dc.DrawText( strDamageRange, rect, 0 );
+
+		// ダメージの詳細を表示したいんだよね…
+		// 本当は、ゲージ部分をクリックされたらポップアップしてくれるのが良いかなと思うけど、、、
 	}
 
 	for ( int i = 0; i < bitmaptable.size(); ++i )

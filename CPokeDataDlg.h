@@ -72,18 +72,7 @@ private:
 	void initRankCorrect(); // ランク補正コンボボックスの初期化
 
 protected:
-	int m_radioBattle;	// シングル or ダブル
-	int m_radioWeather;	// 天候
-	int m_radioField;	// フィールド
-
 	// 処理を統一するために、vectorかmapにしてindexを対応させた方がいいと思う
-	BOOL m_checkGravity;		// 重力
-	BOOL m_checkWonderRoom;		// ワンダールーム
-	BOOL m_checkPlasmaShower;	// プラズマシャワー
-	BOOL m_checkFairyAura;		// フェアリーオーラ
-	BOOL m_checkDarkAura;		// ダークオーラ
-	BOOL m_checkAuraBreak;		// オーラブレイク
-
 	BOOL m_checkReflecter;		// リフレクター
 	BOOL m_checkLightScreen;	// 光の壁
 	BOOL m_checkHelpingHand;	// 手助け
@@ -91,6 +80,8 @@ protected:
 	BOOL m_checkJuden;		// 充電
 	BOOL m_checkHaganenoseisin;		// 鋼の精神
 
+	int m_radioNaturePlus; // 性格上昇補正ボタン
+	int m_radioNatureMinus; // 性格下降補正ボタン
 
 // 実装
 protected:
@@ -100,6 +91,8 @@ protected:
 
 
 private:
+	bool getNatureStatus( int &plus, int &minus ); // 上昇/下降補正がかかるステータスを取得する
+	void setNatureStatus( const int plus, const int minus ); // 上昇/下降補正がかかるステータスを設定する
 	bool addEffortVal( UINT id, bool isGain ); // 努力値を増減させる
 	void statusCalcBase( UINT id, bool isGain ); // ステータス計算ベース関数
 	void AllEditCheck(); // レベルや個体値、努力値が指定の範囲に収まっているか？をチェックし、溢れていたら丸める
@@ -116,7 +109,7 @@ public:
 	afx_msg void OnChangeEditName();
 	afx_msg void OnChangeEditLevel();
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
-	afx_msg void OnCbnSelchangeCombo();
+	afx_msg void OnCbnSelchangeComboNature();
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 protected:
 	afx_msg LRESULT OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam );

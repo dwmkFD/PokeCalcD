@@ -26,17 +26,6 @@ CPokeDataDlg::CPokeDataDlg(CWnd* pParent /*=nullptr*/)
 	, m_editStatus( PokemonData::StatusKind * 3 )   // いわゆる3値なので×3
 	, m_scrollStatus( PokemonData::StatusKind * 3 )
 
-	, m_radioBattle( 0 )
-	, m_radioWeather( 0 )
-	, m_radioField( 0 )
-
-	, m_checkGravity( FALSE )
-	, m_checkWonderRoom( FALSE )
-	, m_checkPlasmaShower( FALSE )
-	, m_checkFairyAura( FALSE )
-	, m_checkDarkAura( FALSE )
-	, m_checkAuraBreak( FALSE )
-
 	, m_checkReflecter( FALSE )
 	, m_checkLightScreen( FALSE )
 	, m_checkHelpingHand( FALSE )
@@ -45,6 +34,7 @@ CPokeDataDlg::CPokeDataDlg(CWnd* pParent /*=nullptr*/)
 	, m_checkHaganenoseisin( FALSE )
 
 	, m_cmbRank( PokemonData::StatusKind ) // HPはランク補正かけられないから要らないけど、領域だけ確保する
+	, m_radioNatureMinus( 0 )
 {
 
 }
@@ -55,8 +45,7 @@ CPokeDataDlg::~CPokeDataDlg()
 
 void CPokeDataDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
-
+	CDialogEx::DoDataExchange( pDX );
 
 	// ポケモン1側
 	DDX_Control( pDX, IDC_EDIT1, m_editCtrl_Name );
@@ -122,6 +111,9 @@ void CPokeDataDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control( pDX, IDC_COMBO13, m_cmbItem );
 	DDX_Control( pDX, IDC_COMBO14, m_cmbTeraType );
 	DDX_Control( pDX, IDC_STATIC_EFFTVAL1, m_strEfftTotal );
+
+	DDX_Radio( pDX, IDC_RADIO13, m_radioNatureMinus );
+	DDX_Radio( pDX, IDC_RADIO18, m_radioNaturePlus );
 }
 
 
@@ -132,7 +124,7 @@ BEGIN_MESSAGE_MAP(CPokeDataDlg, CDialogEx)
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeDataDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeDataDlg::OnChangeEditName )
 	ON_EN_CHANGE( IDC_EDIT2, &CPokeDataDlg::OnChangeEditLevel )
-	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeDataDlg::OnCbnSelchangeCombo )
+	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeDataDlg::OnCbnSelchangeComboNature )
 	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeDataDlg::OnPcdStatusRecalculate )
 	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
@@ -196,26 +188,26 @@ BOOL CPokeDataDlg::PreTranslateMessage( MSG *pMsg )
 // 性格コンボボックスの初期化
 void CPokeDataDlg::initNature()
 {
-	m_cmbNature.AddString( _T( "さみしがり A+ B-" ) );
-	m_cmbNature.AddString( _T( "いじっぱり A+ C-" ) );
-	m_cmbNature.AddString( _T( "やんちゃ A+ D-" ) );
-	m_cmbNature.AddString( _T( "ゆうかん A+ S-" ) );
-	m_cmbNature.AddString( _T( "ずぶとい B+ A-" ) );
-	m_cmbNature.AddString( _T( "わんぱく B+ C-" ) );
-	m_cmbNature.AddString( _T( "のうてんき B+ D-" ) );
-	m_cmbNature.AddString( _T( "のんき B+ S-" ) );
-	m_cmbNature.AddString( _T( "ひかえめ C+ A-" ) );
-	m_cmbNature.AddString( _T( "おっとり C+ B-" ) );
-	m_cmbNature.AddString( _T( "うっかりや C+ D-" ) );
-	m_cmbNature.AddString( _T( "れいせい C+ S-" ) );
-	m_cmbNature.AddString( _T( "おだやか D+ A-" ) );
-	m_cmbNature.AddString( _T( "おとなしい D+ B-" ) );
-	m_cmbNature.AddString( _T( "しんちょう D+ C-" ) );
-	m_cmbNature.AddString( _T( "なまいき D+ S-" ) );
-	m_cmbNature.AddString( _T( "おくびょう S+ A-" ) );
-	m_cmbNature.AddString( _T( "せっかち S+ B-" ) );
-	m_cmbNature.AddString( _T( "ようき S+ C-" ) );
-	m_cmbNature.AddString( _T( "むじゃき S+ D-" ) );
+	m_cmbNature.AddString( _T( "さみしがり（こうげき+ ぼうぎょ-）" ) );
+	m_cmbNature.AddString( _T( "いじっぱり（こうげき+ とくこう-）" ) );
+	m_cmbNature.AddString( _T( "やんちゃ（こうげき+ とくぼう-）" ) );
+	m_cmbNature.AddString( _T( "ゆうかん（こうげき+ すばやさ-）" ) );
+	m_cmbNature.AddString( _T( "ずぶとい（ぼうぎょ+ こうげき-）" ) );
+	m_cmbNature.AddString( _T( "わんぱく（ぼうぎょ+ とくこう-）" ) );
+	m_cmbNature.AddString( _T( "のうてんき（ぼうぎょ+ とくぼう-）" ) );
+	m_cmbNature.AddString( _T( "のんき（ぼうぎょ+ すばやさ-）" ) );
+	m_cmbNature.AddString( _T( "ひかえめ（とくこう+ こうげき-）" ) );
+	m_cmbNature.AddString( _T( "おっとり（とくこう+ ぼうぎょ-）" ) );
+	m_cmbNature.AddString( _T( "うっかりや（とくこう+ とくぼう-）" ) );
+	m_cmbNature.AddString( _T( "れいせい（とくこう+ すばやさ-）" ) );
+	m_cmbNature.AddString( _T( "おだやか（とくぼう+ こうげき-）" ) );
+	m_cmbNature.AddString( _T( "おとなしい（とくぼう+ ぼうぎょ-）" ) );
+	m_cmbNature.AddString( _T( "しんちょう（とくぼう+ とくこう-）" ) );
+	m_cmbNature.AddString( _T( "なまいき（とくぼう+ すばやさ-）" ) );
+	m_cmbNature.AddString( _T( "おくびょう（すばやさ+ こうげき-）" ) );
+	m_cmbNature.AddString( _T( "せっかち（すばやさ+ ぼうぎょ-）" ) );
+	m_cmbNature.AddString( _T( "ようき（すばやさ+ とくこう-）" ) );
+	m_cmbNature.AddString( _T( "むじゃき（すばやさ+ とくぼう-）" ) );
 	m_cmbNature.AddString( _T( "がんばりや" ) );
 	m_cmbNature.AddString( _T( "すなお" ) );
 	m_cmbNature.AddString( _T( "まじめ" ) );
@@ -332,6 +324,31 @@ void CPokeDataDlg::initRankCorrect()
 	m_cmbRank[PokemonData::Speed_Index].SetCurSel( 6 );
 }
 
+// 上昇/下降補正がかかるステータスを取得する
+// 無補正の性格の場合は false、それ以外はtrueを返す
+bool CPokeDataDlg::getNatureStatus( int &plus, int &minus )
+{
+	int now_nature = m_cmbNature.GetCurSel(); // 今選んでいる性格を取得
+	if ( now_nature >= 20 )
+	{
+		plus = minus = -1; // 無補正
+		return ( false );
+	}
+	else
+	{
+		plus = now_nature / 4; // 4で割った余りによってABCDSのどこに上昇補正がかかっているかわかる
+		minus = now_nature % 4; // 同、下降補正…だが、上昇と下降は一致しないので、補正も必要
+		minus += ( minus >= plus ? 1 : 0 );
+	}
+
+	return ( true );
+}
+
+void CPokeDataDlg::setNatureStatus( const int plus, const int minus )
+{
+	int sel = plus * 4 + ( minus >= plus ? minus - 1 : minus );
+	m_cmbNature.SetCurSel( sel );
+}
 
 // 努力値を増減させる
 bool CPokeDataDlg::addEffortVal( UINT id, bool isGain = true )
@@ -346,7 +363,7 @@ bool CPokeDataDlg::addEffortVal( UINT id, bool isGain = true )
 	AllCalcStatus(); // ステータス再計算
 
 	int realval2 = _tcstol( m_editStatus[id], nullptr, 10 );
-	if ( realval2 == realval ) // 努力値を4だけ増減させてステータスが変わらなかった場合
+	if ( abs( realval2 - realval ) == 0 ) // ステータスが無変化だった場合
 	{
 		// さらに4だけ増減させる
 		efftval += ( isGain ? 1 : -1 ) * 4;
@@ -391,7 +408,7 @@ void CPokeDataDlg::AllCalcStatus()
 	//    -> 1匹2匹程度なら、毎回データベースから拾ってきても良いかも
 	CRecordset rs( m_database );
 	CString strSQL;
-	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName ); // 2回のループにしないとダメ！！！！！！
+	strSQL.Format( _T( "SELECT * FROM pokemon WHERE 名前='%s'" ), m_editValName );
 	auto res = rs.Open( CRecordset::forwardOnly, strSQL );
 	short nFields = rs.GetODBCFieldCount();
 
@@ -445,13 +462,23 @@ void CPokeDataDlg::AllCalcStatus()
 		m_editStatus[PokemonData::HP_Index].Format( _T( "%d" ), m_pokemon.m_status[PokemonData::HP_Index] );
 
 		// それ以外のステータスを計算する
+		int naturePlus, natureMinus;
+		getNatureStatus( naturePlus, natureMinus );
 		for ( int i = 1; i < PokemonData::StatusKind; ++i )
 		{
 			m_pokemon.m_status[PokemonData::HP_Index + i] = ( status[PokemonData::HP_Index + i] * 2 + status[6 + PokemonData::HP_Index + i] + status[12 + PokemonData::HP_Index + i] / 4 ) * lv / 100 + 5;
-			m_editStatus[PokemonData::HP_Index + i].Format( _T( "%d" ), m_pokemon.m_status[PokemonData::HP_Index + i] );
 
 			// 性格補正する
-			// ちょっと実装保留で…
+			if ( ( i - 1 ) == naturePlus )
+			{
+				m_pokemon.m_status[PokemonData::HP_Index + i] *= 1.1; // 上昇補正なら1.1倍(切り捨て)
+			}
+			if ( ( i - 1 ) == natureMinus )
+			{
+				m_pokemon.m_status[PokemonData::HP_Index + i] *= 0.9; // 下降補正なら0.9倍(切り捨て)
+			}
+
+			m_editStatus[PokemonData::HP_Index + i].Format( _T( "%d" ), m_pokemon.m_status[PokemonData::HP_Index + i] );
 		}
 
 		// 努力値表示更新
@@ -656,7 +683,25 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 		//    素早さを+-した場合→攻撃 or 特攻のうち低い/高い方(一緒なら攻撃)を-+する
 		//    っていう感じ？
 		//    でもそれは「無補正」から変える時か「今+-のやつを-+に変える時」の話なんだよね…(+-のうち一方がユーザの意図通りだったら動かしちゃダメ)
-		// getMaxMinStatus(); // 的なやつを実装したい
+		int before_plus, before_minus;
+		auto correct = getNatureStatus( before_plus, before_minus );
+
+		int after_plus = -1, after_minus = -1;
+		if ( inputId / 5 >= 1 )
+		{
+			after_plus = inputId % 5;
+		}
+		else
+		{
+			after_minus = inputId % 5;
+		}
+
+		int atk = _tcstol( m_editStatus[PokemonData::Attack_Index], nullptr, 10 );
+		int cnt = _tcstol( m_editStatus[PokemonData::Contact_Index], nullptr, 10 );
+
+		if ( correct == false ) // 無補正の性格から変更する場合
+		{
+		}
 	}
 	else if ( inputId < 38 ) // 次の10個はランク補正
 	{
@@ -770,13 +815,20 @@ void CPokeDataDlg::OnChangeEditLevel()
 	UpdateData( TRUE );
 
 	// レベルを変更したらステータスを再計算する
-	OnPcdStatusRecalculate( 0, 0 );
+	AllCalcStatus();
 }
 
-void CPokeDataDlg::OnCbnSelchangeCombo()
+void CPokeDataDlg::OnCbnSelchangeComboNature()
 {
 	// TODO: ここにコントロール通知ハンドラー コードを追加します。
 	// 変更した性格に合わせてラジオボタンのON/OFFを変更する
+	UpdateData( TRUE );
+
+	int plus, minus;
+	getNatureStatus( plus, minus );
+	m_radioNaturePlus = plus;
+	m_radioNatureMinus = minus;
+	UpdateData( FALSE );
 
 	// 性格を変更したらステータスを再計算する
 	if ( m_editValName.IsEmpty() == FALSE )

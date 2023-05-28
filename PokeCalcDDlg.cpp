@@ -363,19 +363,10 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	if ( pokemon1.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );
 	if ( pokemon2.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );
 
-	// チェックボックス等を見てオプションを設定する
+	// チェックボックス等を見てオプションを設定するべし！
 
 	auto damage_result1 = m_damage->calc( pokemon1, pokemon2, option );
 	auto damage_result2 = m_damage->calc( pokemon2, pokemon1, option );
-
-	// グループボックスのレジェンドを変える -> 適当なstatic text に変更したい
-#if 0
-	CString strBuffer;
-	strBuffer.Format( _T( "%s が %s を攻撃" ), pokemon1.m_name, pokemon2.m_name );
-	GetDlgItem( IDC_STATIC_GROUP_DAMAGE1TO2 )->SetWindowTextW( strBuffer );
-	strBuffer.Format( _T( "%s が %s を攻撃" ), pokemon2.m_name, pokemon1.m_name );
-	GetDlgItem( IDC_STATIC_GROUP_DAMAGE2TO1 )->SetWindowTextW( strBuffer );
-#endif
 
 	m_dlgDamageWindow[0].setDamageInfo( damage_result1, pokemon2.m_status[PokemonData::HP_Index] );
 	m_dlgDamageWindow[1].setDamageInfo( damage_result2, pokemon1.m_status[PokemonData::HP_Index] );
