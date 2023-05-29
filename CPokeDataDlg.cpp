@@ -34,7 +34,8 @@ CPokeDataDlg::CPokeDataDlg(CWnd* pParent /*=nullptr*/)
 	, m_checkHaganenoseisin( FALSE )
 
 	, m_cmbRank( PokemonData::StatusKind ) // HPはランク補正かけられないから要らないけど、領域だけ確保する
-	, m_radioNatureMinus( 0 )
+	, m_radioNaturePlus( -1 )
+	, m_radioNatureMinus( -1 )
 {
 
 }
