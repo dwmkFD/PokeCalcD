@@ -96,7 +96,8 @@ void CComplDataDlg::setListBox( std::vector<CString> nameList )
 
 void CComplDataDlg::clearListBox()
 {
-	for ( int i = 0; i < m_lboxComplName.GetCount(); ++i )
+	const int nCnt = m_lboxComplName.GetCount();
+	for ( int i = 0; i < nCnt; ++i )
 	{
 		m_lboxComplName.DeleteString( 0 );
 	}

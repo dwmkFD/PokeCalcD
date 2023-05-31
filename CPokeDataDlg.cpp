@@ -761,8 +761,6 @@ void CPokeDataDlg::OnChangeEditBase( CEdit &editCtrl, CString &editVal )
 			return;
 		}
 		auto res = rs.Open( CRecordset::forwardOnly, strSQL );
-		CODBCFieldInfo fi;
-		short nFields = rs.GetODBCFieldCount();
 		std::vector<CString> nameList;
 		while ( rs.IsEOF() == FALSE )
 		{

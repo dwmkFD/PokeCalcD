@@ -29,6 +29,7 @@ public:
 
 	// ↓この辺も、ビット定義するの自体は良いけど、std::mapとかに入れておいた方が良いと思う…
 	// 　データベースから読み出してポケモンにセットした特性からビット情報を拾うの無理でしょ…
+	// 今更だけど、別にビットにしなくて良かったのでは？std::mapとかから拾って、一意に決めれば良いんだし
 	// 特性ビット定義
 	static constexpr uint64_t ABILITY_SNIPER          = 0x0000000000000001; // スナイパー
 	static constexpr uint64_t ABILITY_TINTLENS        = 0x0000000000000002; // 色眼鏡
@@ -92,7 +93,7 @@ public:
 	static constexpr uint64_t ABILITY_DRAGONSMAW      = 0x0000800000000000; // 龍のあぎと
 	static constexpr uint64_t ABILITY_ROCKYPAYLOAD    = 0x0001000000000000; // 岩運び
 	static constexpr uint64_t ABILITY_MERCILESS       = 0x0002000000000000; // 人でなし
-	static constexpr uint64_t ABILITY_PROTOSYNTHESIS  = 0x0004000000000000; // 古代活性
+	static constexpr uint64_t ABILITY_PROTOSYNTHESIS  = 0x0004000000000000; // 古代活性 // -> 以下4つ、天気とかフィールドを見て自動的に補正するなら、ビット分けないとダメ
 	static constexpr uint64_t ABILITY_QUARKDRIVE      = 0x0004000000000000; // クォークチャージ
 	static constexpr uint64_t ABILITY_ORICHALCUMPULSE = 0x0004000000000000; // ヒヒイロの鼓動
 	static constexpr uint64_t ABILITY_HADRONENGINE    = 0x0004000000000000; // ハドロンエンジン
