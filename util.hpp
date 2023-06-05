@@ -172,3 +172,9 @@ public:
 private:
 	std::map<CString, CString> m_mapping;
 };
+
+struct CalcUtil {
+public:
+	template<typename T> bool chmax( T &a, const T b ) { if ( a <= b ) { a = b; return ( true ); } else { return ( false ); } }
+	template<typename T> bool chmin( T &a, const T b ) { if ( a >= b ) { a = b; return ( true ); } else { return ( false ); } }
+};

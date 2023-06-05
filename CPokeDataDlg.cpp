@@ -119,10 +119,10 @@ void CPokeDataDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CPokeDataDlg, CDialogEx)
-	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO12, &CPokeDataDlg::OnBnClickedRadioBase )
+	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO22, &CPokeDataDlg::OnBnClickedRadioBase )
 	ON_CONTROL_RANGE( CBN_SELCHANGE, IDC_COMBO2, IDC_COMBO6, &CPokeDataDlg::OnCbnSelChangeComboBox )
 
-	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON48, &CPokeDataDlg::OnBnClickedStatusButton )
+	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON38, &CPokeDataDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeDataDlg::OnChangeEditName )
 	ON_EN_CHANGE( IDC_EDIT2, &CPokeDataDlg::OnChangeEditLevel )
 	ON_CBN_SELCHANGE( IDC_COMBO1, &CPokeDataDlg::OnCbnSelchangeComboNature )
@@ -546,7 +546,7 @@ void CPokeDataDlg::AllCalcStatus()
 // ラジオボタン制御のベース関数
 void CPokeDataDlg::OnBnClickedRadioBase( UINT id )
 {
-	UpdateData( TRUE );
+	OnBnClickedStatusButton( id ); // 内部でIDチェックしてるので問答無用で呼んでも大丈夫だと思う
 }
 
 // コンボボックス制御のベース関数
@@ -673,38 +673,8 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 		else { val = 0; }
 		m_editStatus[inputId].Format( _T( "%d" ), val );
 		UpdateData( FALSE );
-
-		AllCalcStatus(); // ここで入力がおかしくなることは無いので、そのままステータスを再計算する（努力値溢れは警告だけして受け入れる）
 	}
-	else if ( inputId < 28 ) // 次の10個は性格補正
-	{
-		// + あるいは - が押された時、最も低い / 高いステータスが - / + になるように性格を変えてあげたい
-		// -> どちらかというと、、、
-		//    攻撃 or 特攻を+-した場合→もう一方を-+する
-		//    素早さを+-した場合→攻撃 or 特攻のうち低い/高い方(一緒なら攻撃)を-+する
-		//    っていう感じ？
-		//    でもそれは「無補正」から変える時か「今+-のやつを-+に変える時」の話なんだよね…(+-のうち一方がユーザの意図通りだったら動かしちゃダメ)
-		int before_plus, before_minus;
-		auto correct = getNatureStatus( before_plus, before_minus );
-
-		int after_plus = -1, after_minus = -1;
-		if ( inputId / 5 >= 1 )
-		{
-			after_plus = inputId % 5;
-		}
-		else
-		{
-			after_minus = inputId % 5;
-		}
-
-		int atk = _tcstol( m_editStatus[PokemonData::Attack_Index], nullptr, 10 );
-		int cnt = _tcstol( m_editStatus[PokemonData::Contact_Index], nullptr, 10 );
-
-		if ( correct == false ) // 無補正の性格から変更する場合
-		{
-		}
-	}
-	else if ( inputId < 38 ) // 次の10個はランク補正
+	else if ( inputId < 28 ) // 次の10個はランク補正
 	{
 		int cur = static_cast<CComboBox *>( GetDlgItem( IDC_COMBO2 + ( inputId - 28 ) / 2 ) )->GetCurSel();
 		if ( inputId % 2 )
@@ -726,7 +696,7 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 			}
 		}
 	}
-	else if ( inputId < 48 ) // 次の10個は特性補正
+	else if ( inputId < 38 ) // 次の10個は特性補正
 	{
 		// 同上
 		// 自分で入れておいてアレだけど、特性補正ってなんだ？
@@ -734,12 +704,135 @@ void CPokeDataDlg::OnBnClickedStatusButton( UINT id )
 		// 総大将みたいに、値が変わるパターンがあるから、一律1.3倍みたいなことはできないか…。
 		// ↑特性欄を選んだ時点で、上下する値が固定の子たちは自動的に入れてあげたいね
 	}
+	else if ( inputId < 48 ) // 次の10個は性格補正
+	{
+		// + あるいは - が押された時、最も低い / 高いステータスが - / + になるように性格を変えてあげたい
+		// -> どちらかというと、、、
+		//    攻撃 or 特攻を+-した場合→もう一方を-+する
+		//    素早さを+-した場合→攻撃 or 特攻のうち低い/高い方(一緒なら攻撃)を-+する
+		//    っていう感じ？
+		//    でもそれは「無補正」から変える時か「今+-のやつを-+に変える時」の話なんだよね…(+-のうち一方がユーザの意図通りだったら動かしちゃダメ)
+		int before_plus, before_minus;
+		auto correct = getNatureStatus( before_plus, before_minus );
+
+		inputId -= 38;
+
+		if ( inputId / 5 >= 1 )
+		{
+			auto set_total_status_max = [&]( int after_plus ) {
+				CalcUtil util;
+				int max_status = -1;
+				for ( int i = 0; i < 4; ++i )
+				{
+					int before_cursel = m_cmbNature.GetCurSel();
+					m_cmbNature.SetCurSel( after_plus * 4 + i );
+					UpdateData( FALSE );
+					AllCalcStatus();
+
+					int tmp_status = 0;
+					for ( int j = PokemonData::Attack_Index; j < PokemonData::Speed_Index; ++j )
+					{
+						tmp_status += _tcstol( m_editStatus[j], nullptr, 10 );
+					}
+
+					if ( util.chmax( max_status, tmp_status ) == false )
+					{
+						m_cmbNature.SetCurSel( before_cursel ); // 最大値を取れなかった時は元に戻す
+						UpdateData( FALSE );
+					}
+				}
+			};
+
+			// +ボタンの方が押された
+			int after_plus = inputId % 5;
+			if ( after_plus == before_minus )
+			{
+				// 上昇補正をかける位置が下降補正をかけていた位置である
+				set_total_status_max( after_plus );
+			}
+			else if ( after_plus == before_plus )
+			{
+				// 上昇補正をかける場所を変えないなら何もしない
+			}
+			else
+			{
+				// 上昇補正の位置は変えるが下降補正の位置は変えない
+				int after_plus = inputId % 5;
+				if ( before_minus >= 0 )
+				{
+					setNatureStatus( after_plus, before_minus );
+				}
+				else
+				{
+					// ただし無補正の性格から変える場合はステータス合計が最大になるように性格を補正する
+					set_total_status_max( after_plus );
+				}
+			}
+		}
+		else
+		{
+			auto set_total_status_max2 = [&]( int after_minus ) {
+				CalcUtil util;
+				int max_status = -1;
+				for ( int i = 0; i < 4; ++i )
+				{
+					int before_cursel = m_cmbNature.GetCurSel();
+					int after_minus2 = ( after_minus >= i ? after_minus - 1 : after_minus );
+					m_cmbNature.SetCurSel( i * 4 + after_minus2 );
+					UpdateData( FALSE );
+					AllCalcStatus();
+
+					int tmp_status = 0;
+					CalcUtil util;
+					for ( int j = PokemonData::Attack_Index; j < PokemonData::Speed_Index; ++j )
+					{
+						tmp_status += _tcstol( m_editStatus[j], nullptr, 10 );
+					}
+
+					if ( util.chmax( max_status, tmp_status ) == false )
+					{
+						m_cmbNature.SetCurSel( before_cursel ); // 最大値を取れなかった時は元に戻す
+						UpdateData( FALSE );
+					}
+				}
+			};
+
+			// -ボタンの方が押された
+			int after_minus = inputId % 5;
+			if ( after_minus == before_plus )
+			{
+				// 下降補正をかける位置が上昇補正をかけていた位置である
+				set_total_status_max2( after_minus );
+			}
+			else if ( after_minus == before_minus )
+			{
+				// 下降補正をかける場所を変えないなら何もしない
+			}
+			else
+			{
+				// 下降補正の位置は変えるが上昇補正の位置は変えない
+				int after_minus = inputId % 5;
+				if ( before_plus >= 0 )
+				{
+					setNatureStatus( before_plus, after_minus );
+				}
+				else
+				{
+					// ただし無補正の性格から変える場合はステータス合計が最大になるように性格を補正する
+					set_total_status_max2( after_minus );
+				}
+			}
+		}
+
+		getNatureStatus( m_radioNaturePlus, m_radioNatureMinus );
+	}
 	else
 	{
 		// 不正なIDの時は何もしない
 	}
 
 	UpdateData( FALSE );
+	AllCalcStatus(); // ステータスを再計算
 	GetParent()->SendMessage( PCD_DAMAGECALC_REQUEST ); // ステータスを修正したらダメージを再計算
 }
 
