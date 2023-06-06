@@ -532,8 +532,8 @@ public:
 			}
 
 			/* STEP11-6-3. パンクロック補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
-				&& ( m_moveDB[atkmove].m_direct ) ) // 音属性入れないとダメ
+			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_PUNKROCK_DEF )
+				&& ( m_moveDB[atkmove].m_sound ) ) // 音の技の時
 			{
 				// 音の技を受ける時はダメージ半減
 				// 逆に音技を使う時は[威力]上昇？ -> 威力計算の時にやる？
@@ -546,7 +546,7 @@ public:
 			}
 
 			/* STEP11-6-4. もふもふ(接触技)補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FLUFFY_DIRECT )
 				&& ( m_moveDB[atkmove].m_direct ) )
 			{
 				// 接触技を受ける時はダメージ半減
@@ -560,7 +560,7 @@ public:
 
 			/* STEP11-7. Mfilter補正 */
 			/* STEP11-7-1. ハードロック/フィルター補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FILTER )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// ハードロック/フィルターが発動する時はダメージ0.75倍
