@@ -120,7 +120,7 @@ void CPokeDataDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CPokeDataDlg, CDialogEx)
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO22, &CPokeDataDlg::OnBnClickedRadioBase )
-	ON_CONTROL_RANGE( CBN_SELCHANGE, IDC_COMBO2, IDC_COMBO6, &CPokeDataDlg::OnCbnSelChangeComboBox )
+	ON_CONTROL_RANGE( CBN_SELCHANGE, IDC_COMBO2, IDC_COMBO14, &CPokeDataDlg::OnCbnSelChangeComboBox )
 
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_BUTTON1, IDC_BUTTON38, &CPokeDataDlg::OnBnClickedStatusButton )
 	ON_EN_CHANGE( IDC_EDIT1, &CPokeDataDlg::OnChangeEditName )
@@ -553,6 +553,32 @@ void CPokeDataDlg::OnBnClickedRadioBase( UINT id )
 void CPokeDataDlg::OnCbnSelChangeComboBox( UINT id )
 {
 	UpdateData( TRUE );
+
+	UINT inputId = id - IDC_COMBO2;
+
+	if ( id < IDC_COMBO7 )
+	{
+		// ランク補正
+	}
+	else if ( id < IDC_COMBO12 )
+	{
+		// 特性補正
+	}
+	else if ( id == IDC_COMBO12 )
+	{
+		// 特性
+		CString strAbility;
+		m_cmbAbility.GetWindowText( strAbility );
+		m_pokemon.m_option.m_ability = m_abilitydata[strAbility];
+	}
+	else if ( id == IDC_COMBO13 )
+	{
+		// 持ち物
+	}
+	else if ( id == IDC_COMBO14 )
+	{
+		// テラスタイプ
+	}
 }
 
 // ステータス計算のベース関数

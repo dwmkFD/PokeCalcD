@@ -134,11 +134,11 @@ public:
 		int rank = 0;
 		rank += m_moveDB[name].m_critical; // 急所に当たりやすい技なら、急所ランクを上げる(確定急所技は+3、それ以外は+1）
 
-		if ( atk.m_option.m_ability & PokemonDataSub::ABILITY_SUPERLUCK ) // 攻撃側の特性が強運
+		if ( atk.m_option.m_ability & PokemonAbility::ABILITY_SUPERLUCK ) // 攻撃側の特性が強運
 		{
 			++rank;
 		}
-		if ( ( atk.m_option.m_ability & PokemonDataSub::ABILITY_MERCILESS ) // 攻撃側の特性が人でなしで、
+		if ( ( atk.m_option.m_ability & PokemonAbility::ABILITY_MERCILESS ) // 攻撃側の特性が人でなしで、
 			&& ( def.m_option.m_conditionAbnormaly & PokemonDataSub::CONDITION_POISON ) ) // 防御側が毒/猛毒状態
 		{
 			rank += 3;
@@ -465,7 +465,7 @@ public:
 			/* STEP11-2. ブレインフォース補正は第九世代には存在しない */
 
 			/* STEP11-3. スナイパー補正 */
-			if ( atk.m_option.m_ability & PokemonDataSub::ABILITY_SNIPER )
+			if ( atk.m_option.m_ability & PokemonAbility::ABILITY_SNIPER )
 			{
 				for ( int i = 16; i < 32; ++i ) // 急所に当たった時、更に威力が1.5倍
 				{
@@ -476,7 +476,7 @@ public:
 			}
 
 			/* STEP11-4. いろめがね補正 */
-			if ( ( atk.m_option.m_ability & PokemonDataSub::ABILITY_TINTLENS )
+			if ( ( atk.m_option.m_ability & PokemonAbility::ABILITY_TINTLENS )
 				&& ( typecomp_res < 1.0 ) )
 			{
 				for ( int i = 0; i < 32; ++i )
@@ -489,7 +489,7 @@ public:
 			}
 
 			/* STEP11-5. もふもふ(炎技被弾)補正 */
-			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FLUFFY_FLARE )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_FLUFFY )
 				&& ( m_moveDB[atkmove].m_type == _T( "ほのお" ) ) )
 			{
 				for ( int i = 0; i < 32; ++i )
@@ -504,7 +504,7 @@ public:
 
 			/* STEP11-6. Mhalf補正 */
 			/* STEP11-6-1. 氷の鱗粉補正 */
-			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_ICE_SCALES )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_ICE_SCALES )
 				&& ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK ) )
 			{
 				// 氷の鱗粉で特殊技を受ける時はダメージ半減
@@ -517,7 +517,7 @@ public:
 			}
 
 			/* STEP11-6-2. ファントムガード、マルチスケイル補正 */
-			if ( def.m_option.m_ability & PokemonDataSub::ABILITY_SHADOWSHIELD )
+			if ( def.m_option.m_ability & PokemonAbility::ABILITY_SHADOWSHIELD )
 			{
 				// ファントムガード、マルチスケイルが発動する時はダメージ半減
 				// -> ツールとしてはチェックボックスのON/OFFで切り替えるのでHP判定はしない
@@ -532,7 +532,7 @@ public:
 			}
 
 			/* STEP11-6-3. パンクロック補正 */
-			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_PUNKROCK_DEF )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_PUNKROCK )
 				&& ( m_moveDB[atkmove].m_sound ) ) // 音の技の時
 			{
 				// 音の技を受ける時はダメージ半減
@@ -546,7 +546,7 @@ public:
 			}
 
 			/* STEP11-6-4. もふもふ(接触技)補正 */
-			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FLUFFY_DIRECT )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_FLUFFY )
 				&& ( m_moveDB[atkmove].m_direct ) )
 			{
 				// 接触技を受ける時はダメージ半減
@@ -560,7 +560,7 @@ public:
 
 			/* STEP11-7. Mfilter補正 */
 			/* STEP11-7-1. ハードロック/フィルター補正 */
-			if ( ( def.m_option.m_ability & PokemonDataSub::ABILITY_FILTER )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_FILTER )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// ハードロック/フィルターが発動する時はダメージ0.75倍

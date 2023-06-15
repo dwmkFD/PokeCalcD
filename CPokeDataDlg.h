@@ -43,6 +43,7 @@ protected:
 	CComplDataDlg m_complDlg; // ポケモン名の補完に使うダイアログボックス
 
 	CTransrateRomaKana m_trans; // ローマ字をカタカナに変換するユーティリティ
+	PokemonAbility m_abilitydata; // 特性の名称を該当ビットをONにしたデータに変換する
 
 	PokemonData m_pokemon; // このポケモンの情報
 

@@ -82,6 +82,13 @@ public:
 		m_ability_map[_T( "ハドロンエンジン" )] = ABILITY_HADRONENGINE;
 	}
 
+	uint64_t get( CString ability ) {
+		return ( m_ability_map[ability] );
+	}
+	uint64_t operator []( CString ability ) {
+		return ( get( ability ) );
+	}
+
 	std::map<CString, uint64_t> m_ability_map;
 
 	// 特性ビット定義（PokemonDataSubから移植する）
