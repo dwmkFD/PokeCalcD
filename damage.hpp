@@ -214,19 +214,41 @@ public:
 				{
 					// 物理技の時は、攻撃側の「攻撃」と防御側の「防御」を使う
 					A *= atk.m_status[PokemonData::Attack_Index]; D *= def.m_status[PokemonData::Block_Index];
+					if ( ( atk.m_option.m_ability & PokemonAbility::ABILITY_HUGEPOWER )
+						 || ( atk.m_option.m_ability & PokemonAbility::ABILITY_PUREPOWER )
+//						 || ( atk.m_option.m_ability & PokemonAbility::ABILITY_XXXXX ) // 張り込みを入れるべきか否か… でも張り込みは特攻も上がるらしいから別枠か
+						 )
+					{
+						A *= 2; // 力持ち or ヨガパワーなら攻撃を2倍にする
+					}
+					if ( atk.m_option.m_item & PokemonDataSub::ITEM_CHOICEBAND )
+					{
+						// 持ち物がこだわりハチマキなら攻撃を1.5倍(四捨五入)する
+						A *= 6144;
+						A += 2048;
+						A /= 4096;
+					}
 				}
 				if ( category & PokeMove::SPECIAL_CHECK )
 				{
 					// 特殊技の時は、攻撃側の「特攻」と防御側の「特防」を使う
 					A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Diffence_Index];
+					if ( atk.m_option.m_item & PokemonDataSub::ITEM_CHOICESPECS )
+					{
+						// 持ち物がこだわりメガネなら特攻を1.5倍(四捨五入)する
+						A *= 6144;
+						A += 2048;
+						A /= 4096;
+					}
 				}
 			};
 			calcAD( A, D, atk, def, m_moveDB[atkmove].m_category );
 
 			// STEP1-1. サイコショックとサイコブレイクは攻撃側の特攻、防御側の防御を使う
+			// categoryを物理・特殊・変化だけじゃなくて、物理(特殊計算)、特殊(物理計算)みたいなものも入れたら良いかも…
 			if ( ( atkmove == _T( "サイコショック" ) ) || ( atkmove == _T( "サイコブレイク" ) ) )
 			{
-				A *= atk.m_status[PokemonData::Contact_Index]; D *= def.m_status[PokemonData::Block_Index];
+				A = atk.m_status[PokemonData::Contact_Index]; D = def.m_status[PokemonData::Block_Index];
 			}
 
 			// STEP1-2. フォトンゲイザーとシェルアームズはここで補正？
