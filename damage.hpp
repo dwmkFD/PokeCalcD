@@ -329,9 +329,9 @@ public:
 				dmg += 8192; dmg = ( dmg / 4096 ) * 4096;
 				/* STEP3. 範囲補正 */
 				// 切り捨て、四捨五入、五捨五超入は関数化したいね
-				if ( option.m_range )
+				if ( option.m_range && m_moveDB[atkmove].m_range )
 				{
-					// ダブル補正がある場合、ダメージを75％にする
+					// ダブル補正があり、範囲技でもある場合、ダメージを75％にする
 					dmg *= ( 2048 + 1024 );
 					dmg /= 4096;
 					dmg += 2047;
@@ -473,6 +473,8 @@ public:
 					if ( option.m_range )
 					{
 						// ダブル補正がある時は2732/4096倍
+						// これって相手が2体いれば単体攻撃でも補正変わるんだっけ？
+						// 相手が1体の時はシングルと同じ扱いだっけ？
 						tmpresult[i] *= 2732;
 					} else
 					{
@@ -595,7 +597,7 @@ public:
 				}
 			}
 			/* STEP11-7-2. プリズムアーマー補正 */
-			if ( ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( ( option.m_ability & PokemonAbility::ABILITY_PRISMARMOR )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// プリズムアーマーが発動する時はダメージ0.75倍
@@ -608,10 +610,11 @@ public:
 			}
 
 			/* STEP11-8. フレンドガード補正 */
-			if ( option.m_ability & CBattleSettings::ABILITY_SNIPER )
+			if ( option.m_ability & PokemonAbility::ABILITY_FRIENDGUARD )
 			{
 				// フレンドガードが発動する時はダメージ0.75倍
 				// -> ツールとしてはチェックボックスのON/OFFで切り替える
+				//  -> じゃあ↑この判定じゃダメじゃんｗ
 				for ( int i = 0; i < 32; ++i )
 				{
 					tmpresult[i] *= ( 2048 + 1024 );
@@ -646,7 +649,7 @@ public:
 			}
 
 			/* STEP11-11. 命の珠補正 */
-			if ( option.m_item & CBattleSettings::ITEM_LIFEORB )
+			if ( atk.m_option.m_item & PokemonDataSub::ITEM_LIFEORB )
 			{
 				// 命の珠ならダメージ1.3倍 -> 正確には5324/4096倍？
 				for ( int i = 0; i < 32; ++i )
@@ -658,7 +661,7 @@ public:
 			}
 
 			/* STEP11-12. 半減実補正 */
-			if ( ( option.m_item & CBattleSettings::ITEM_LIFEORB )
+			if ( ( atk.m_option.m_item & PokemonDataSub::ITEM_HALFDAMAGEBERRY )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// 弱点半減の実ならダメージ0.5倍 -> これは正確に2048/4096？
@@ -683,6 +686,7 @@ public:
 			}
 
 			/* STEP12. Mprotect補正は第九世代には存在しない */
+			// -> 守る状態に対するZ技、ダイマックス技など
 
 			/* STEP13. 計算結果を4096で割る */
 			// ここまでlong longで計算したのでint型に変換(別に全部long longにしても良いと思うんだけど…)
