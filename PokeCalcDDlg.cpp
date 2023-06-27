@@ -72,13 +72,6 @@ CPokeCalcDDlg::CPokeCalcDDlg( CWnd *pParent /*=nullptr*/ )
 	, m_checkFairyAura( FALSE )
 	, m_checkDarkAura( FALSE )
 	, m_checkAuraBreak( FALSE )
-
-	, m_checkReflecter( FALSE )
-	, m_checkLightScreen( FALSE )
-	, m_checkHelpingHand( FALSE )
-	, m_checkKiaidame( FALSE )
-	, m_checkJuden( FALSE )
-	, m_checkHaganenoseisin( FALSE )
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -109,6 +102,7 @@ BEGIN_MESSAGE_MAP( CPokeCalcDDlg, CDialogEx )
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_CONTROL_RANGE( BN_CLICKED, IDC_RADIO1, IDC_RADIO12, &CPokeCalcDDlg::OnBnClickedRadioBase )
+	ON_CONTROL_RANGE( BN_CLICKED, IDC_CHECK1, IDC_CHECK6, &CPokeCalcDDlg::OnBnClickedCheckBase )
 	ON_MESSAGE( PCD_STATUS_RECALCULATE, &CPokeCalcDDlg::OnPcdStatusRecalculate )
 	ON_MESSAGE( PCD_STATUS_ADDNAMECHAR, &CPokeCalcDDlg::OnPcdAddNameChar )
 	ON_MESSAGE( PCD_DAMAGECALC_REQUEST, &CPokeCalcDDlg::OnPcdDamageCalcRequest )
@@ -320,6 +314,13 @@ void CPokeCalcDDlg::OnBnClickedRadioBase( UINT id )
 }
 
 
+// チェックボックス制御のベース関数
+void CPokeCalcDDlg::OnBnClickedCheckBase( UINT id )
+{
+	UpdateData( TRUE );
+}
+
+
 // ステータス再計算要求
 afx_msg LRESULT CPokeCalcDDlg::OnPcdStatusRecalculate( WPARAM wParam, LPARAM lParam )
 {
@@ -364,6 +365,15 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 	if ( pokemon2.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );
 
 	// チェックボックス等を見てオプションを設定するべし！
+	option.m_range = m_radioBattle;      // シングルバトル or ダブルバトル
+	option.m_fieldStatus = m_radioField; // フィールド
+	option.m_weather = m_radioWeather;   // 天気
+	option.m_battleStatus |= ( m_checkGravity ? CBattleSettings::BATTLE_STATUS_GRAVITY : 0 );
+	option.m_battleStatus |= ( m_checkWonderRoom ? CBattleSettings::BATTLE_STATUS_WONDERROOM : 0 );
+	option.m_battleStatus |= ( m_checkPlasmaShower ? CBattleSettings::BATTLE_STATUS_PLASMASHOWER : 0 );
+	option.m_battleStatus |= ( m_checkFairyAura ? CBattleSettings::BATTLE_STATUS_FAIRYAURA : 0 );
+	option.m_battleStatus |= ( m_checkDarkAura ? CBattleSettings::BATTLE_STATUS_DARKAURA : 0 );
+	option.m_battleStatus |= ( m_checkAuraBreak ? CBattleSettings::BATTLE_STATUS_AURABREAK : 0 );
 
 	auto damage_result1 = m_damage->calc( pokemon1, pokemon2, option );
 	auto damage_result2 = m_damage->calc( pokemon2, pokemon1, option );

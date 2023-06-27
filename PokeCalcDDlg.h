@@ -56,13 +56,6 @@ protected:
 	BOOL m_checkDarkAura;		// ダークオーラ
 	BOOL m_checkAuraBreak;		// オーラブレイク
 
-	BOOL m_checkReflecter;		// リフレクター
-	BOOL m_checkLightScreen;	// 光の壁
-	BOOL m_checkHelpingHand;	// 手助け
-	BOOL m_checkKiaidame;	// 気合溜め
-	BOOL m_checkJuden;		// 充電
-	BOOL m_checkHaganenoseisin;		// 鋼の精神
-
 
 // 実装
 protected:
@@ -79,6 +72,7 @@ protected:
 public:
 	CDatabase *getDatabase() { return ( &m_database ); } // 子ダイアログでデータベースを参照する時用
 	afx_msg void OnBnClickedRadioBase( UINT id );
+	afx_msg void OnBnClickedCheckBase( UINT id );
 	virtual BOOL PreTranslateMessage( MSG *pMsg );
 	afx_msg void OnVScroll( UINT nSBCode, UINT nPos, CScrollBar *pScrollBar );
 protected:

@@ -19,16 +19,11 @@ public:
 	int m_weather; // 天気（0: なし、1: 晴れ、2: 雨、3: 砂、4: 雪）
 	bool m_isBurned; // 火傷
 	int m_barrier; // bit0: リフレクター、 bit1: 光の壁
-	bool m_range; // ダブル補正（0: なし、1: あり）
-	int m_ability; // 特性による補正
-					// bit0: スナイパー、bit1: 色眼鏡、bit2: もふもふ(炎被弾)、bit3: フレンドガード、bit4: 氷の鱗粉、bit5: パンクロック(攻撃)
-					// bit6: パンクロック(防御)、bit7: ファントムガード、bit8: マルチスケイル、bit9: もふもふ(接触技)、bit10: ハードロック/フィルター
-					// bit11: プリズムアーマー
 	bool m_twice; // 特定条件下で威力2倍判定 // -> これは攻撃技側にデータを持たせるべきだと思われる
 	int m_item; // アイテム補正
 				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
 				// bit10: 達人の帯、
-
+	unsigned int m_range; // ダブル補正（0: なし、1: あり）
 	unsigned int m_battleStatus; // 場の状態
 	unsigned int m_fieldStatus;  // フィールド
 
@@ -463,7 +458,7 @@ public:
 			// 今更だけど、型破りを考慮してない…
 			// -> 型破りフラグがONなら、残りの特性系ビットを全部OFFにすれば良いような気もする
 			/* STEP11-1. 壁補正 */
-			if ( m_moveDB[atkmove].m_category & option.m_barrier )
+			if ( m_moveDB[atkmove].m_category & def.m_option.m_barrier )
 			{
 				// 分類と壁の有無が一致
 				// →テラバーストとかフォトンゲイザーが困るか…
@@ -597,7 +592,7 @@ public:
 				}
 			}
 			/* STEP11-7-2. プリズムアーマー補正 */
-			if ( ( option.m_ability & PokemonAbility::ABILITY_PRISMARMOR )
+			if ( ( def.m_option.m_ability & PokemonAbility::ABILITY_PRISMARMOR )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// プリズムアーマーが発動する時はダメージ0.75倍
@@ -610,7 +605,7 @@ public:
 			}
 
 			/* STEP11-8. フレンドガード補正 */
-			if ( option.m_ability & PokemonAbility::ABILITY_FRIENDGUARD )
+			if ( def.m_option.m_ability & PokemonAbility::ABILITY_FRIENDGUARD )
 			{
 				// フレンドガードが発動する時はダメージ0.75倍
 				// -> ツールとしてはチェックボックスのON/OFFで切り替える

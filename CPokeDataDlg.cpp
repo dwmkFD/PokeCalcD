@@ -579,6 +579,9 @@ void CPokeDataDlg::OnCbnSelChangeComboBox( UINT id )
 	{
 		// テラスタイプ
 	}
+
+	UpdateData( FALSE );
+	GetParent()->SendMessage( PCD_DAMAGECALC_REQUEST ); // ステータスを修正したらダメージを再計算
 }
 
 // ステータス計算のベース関数
