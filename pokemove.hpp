@@ -18,10 +18,10 @@ public:
 	PokeMove() = default;
 
 	PokeMove( CString name, CString type, int category, int power, int accuracy, bool direct,
-			  bool bite = false, bool punch = false, int critical = 0, bool pulse = false, bool minimize = false, bool sound = false )
+			  bool bite = false, bool punch = false, int critical = 0, bool pulse = false, bool minimize = false, bool sound = false, bool range = false )
 	{
 		m_name = name; m_type = type; m_category = category; m_power = power;
-		m_accuracy = accuracy; m_direct = direct; m_range = -1;
+		m_accuracy = accuracy; m_direct = direct; m_range = range;
 		m_bite = bite; m_punch = punch; m_critical = critical; m_pulse = pulse;
 		m_minimize = minimize; m_sound = sound;
 	}
@@ -43,7 +43,7 @@ public:
 	int m_category; // 技の分類（物理 bit0、特殊 bit1、変化技 bit0/1ともにOFF）
 	int m_power; // 技の威力
 	int m_accuracy; // 技の命中率
-	int m_range; // 技の範囲（単体 4096、全体および相手全体 3072 → ダブルで威力の判定に使用する） // 3072で良いかどうかは要調査！
+	bool m_range; // 範囲技か？
 	// 技の範囲はデータベースの方も更新が必要、補正量が変わるわけじゃないし、true/falseで良いと思う（この変数もあとでbool型に直す）
 	bool m_direct; // 接触攻撃か否か（鮫肌とかの反撃で落ちるかどうかを計算結果に含むなら＆もふもふ等の判定に）
 	bool m_bite; // かみつき技か？

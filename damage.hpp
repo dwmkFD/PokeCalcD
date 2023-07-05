@@ -76,10 +76,10 @@ public:
 				// var[0] : ID			var[1] : 技名		var[2] : タイプ		var[3] : 分類
 				// var[4] : 威力		var[5] : 命中		var[6] : PP			var[7] : 接触判定
 				// var[8] : かみつき技	var[9] : パンチ技	var[10] : 急所技	var[11] : 波動技
-				// var[12] : 小さくなる	var[13] : 音		var[14] : 説明
+				// var[12] : 小さくなる	var[13] : 音		var[14] : 範囲技	var[15] : 説明
 				m_moveDB[*var[1].m_pstring] = PokeMove( *var[1].m_pstring, *var[2].m_pstring, PokeMove::getCategory( *var[3].m_pstring ),
 											   var[4].m_lVal, var[5].m_lVal, var[7].m_boolVal, var[8].m_boolVal, var[9].m_boolVal,
-											   var[10].m_iVal, var[11].m_boolVal, var[12].m_boolVal, var[13].m_boolVal );
+											   var[10].m_iVal, var[11].m_boolVal, var[12].m_boolVal, var[13].m_boolVal, var[14].m_boolVal );
 
 				rs.MoveNext();
 			}
@@ -99,6 +99,7 @@ public:
 
 		// サイコフィールドでワイドフォースを撃つ場合は威力2倍かつ全体技
 		// -> 技データベースの方を書き換えると面倒なのをどうするか…
+		//  -> ここでは威力だけ補正して、ダブル判定etcは本体の関数でやる(たぶん)
 		if ( option.m_fieldStatus & CBattleSettings::BATTLE_FIELD_PSYCHIC )
 		{
 			if ( name == _T( "ワイドフォース" ) )
@@ -117,9 +118,14 @@ public:
 
 		// ミストフィールドでドラゴン技を使うと威力半減（ダメージ半減？どっち？）
 
-		// ヒートスタンプ、けたぐり、ヘビーボンバーは体重(差)によって威力決定
+		// ヒートスタンプ、けたぐり、ヘビーボンバーは体重差によって威力決定
 
 		// 無天候と晴れ以外の天候でのソーラービーム/ブレードは威力半減
+
+		// おはかまいりは仲間が倒された回数で威力変動(専用の入力欄が必要)
+		// 同、ふんどのこぶしは攻撃を受けた回数で威力変動
+
+		// テラスタイプが有効で、テラスタイプ一致であり、威力が60以下の技は威力を60に上げる
 	}
 
 	double calcCriticalProbability( const CString &name, const PokemonData &atk, const PokemonData &def ) {
@@ -331,6 +337,9 @@ public:
 					dmg /= 4096;
 					dmg += 2047;
 					dmg /= 4096; dmg *= 4096;
+				}
+				else if ( 0 ) // サイコフィールドでワイドフォースを使った場合は m_moveDB[atkmove].m_rangeはfalseだがダブル補正する必要あり
+				{
 				}
 
 				/* STEP4. 親子愛補正は第九世代には存在しない */
