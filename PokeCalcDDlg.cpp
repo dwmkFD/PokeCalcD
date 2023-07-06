@@ -358,7 +358,7 @@ afx_msg LRESULT CPokeCalcDDlg::OnPcdDamageCalcRequest( WPARAM wParam, LPARAM lPa
 {
 	PokemonData pokemon1 = m_dlgPokeData[0].getPokemonData();
 	PokemonData pokemon2 = m_dlgPokeData[1].getPokemonData();
-	CBattleSettings option = { 0 };
+	CBattleSettings option;
 
 	// HPがゼロのポケモンはあらゆる条件において存在しないので、データ不正としてダメージ計算しない
 	if ( pokemon1.m_status[PokemonData::HP_Index] == 0 ) return ( 0 );

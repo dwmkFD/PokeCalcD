@@ -14,18 +14,32 @@
 
 class CBattleSettings { // -> クラス名はいい感じに変えたいｗ
 public:
+	CBattleSettings() {
+		m_weather = 0;
+		m_isBurned = false;
+		m_barrier = 0;
+		m_twice = false;
+		m_battleStatus = 0;
+		m_fieldStatus = 0;
+		m_weekHit = false;
+	}
+
 	// 天気、フィールド、壁、手助け…などの状態を管理したい
 	// -> メインダイアログのメンバ変数も、これにしたいね
 	int m_weather; // 天気（0: なし、1: 晴れ、2: 雨、3: 砂、4: 雪）
 	bool m_isBurned; // 火傷
 	int m_barrier; // bit0: リフレクター、 bit1: 光の壁
 	bool m_twice; // 特定条件下で威力2倍判定 // -> これは攻撃技側にデータを持たせるべきだと思われる
-	int m_item; // アイテム補正
-				// bit0-5: メトロノーム1-6回目、bit6: 命の珠、bit7: 半減実、bit8: タイプ強化アイテム、bit9: ノーマルジュエル
-				// bit10: 達人の帯、
 	unsigned int m_range; // ダブル補正（0: なし、1: あり）
 	unsigned int m_battleStatus; // 場の状態
 	unsigned int m_fieldStatus;  // フィールド
+
+	// その他特殊な判定
+	bool m_weekHit; // 弱点をつくと威力が1.33倍になる時
+	void specialCheckReset() {
+		// 特定の技でだけ立てるフラグをリセットする処理
+		m_weekHit = false;
+	}
 
 	// 場の状態ビット定義 ↑ワンダールーム別変数になってるけど、あとで修正する
 	static constexpr unsigned int BATTLE_STATUS_GRAVITY      = 0x01; // 重力
@@ -93,7 +107,7 @@ public:
 		}
 	}
 
-	int correctPower( const CString name, const PokemonData &atk, const PokemonData &def, const CBattleSettings &option ) {
+	int correctPower( const CString name, const PokemonData &atk, const PokemonData &def, CBattleSettings &option ) {
 		// 技の威力が変わる場合に補正する処理
 		int power = m_moveDB[name].m_power;
 
@@ -109,18 +123,67 @@ public:
 		}
 
 		// エレキボール、ジャイロボールは素早さを比較して威力決定
+		if ( name == _T( "エレキボール" ) )
+		{
+			int atkS = atk.m_status[PokemonData::Speed_Index];
+			int defS = def.m_status[PokemonData::Speed_Index];
+		}
+		else if ( name == _T( "ジャイロボール" ) )
+		{
+			int atkS = atk.m_status[PokemonData::Speed_Index];
+			int defS = def.m_status[PokemonData::Speed_Index];
+		}
 
 		// サイコブレイドはエレキフィールドで威力1.5倍
+		if ( option.m_fieldStatus & CBattleSettings::BATTLE_FIELD_ELECTRIC )
+		{
+			if ( name == _T( "サイコブレイド" ) )
+			{
+			}
+		}
 
 		// イナズマドライブ/アクセルブレイクは弱点をつくと威力1.33倍
+		// -> ここで弱点計算するのは面倒なので、「弱点をついた」フラグをONにするのが良いかも
+		if ( name == _T( "アクセルブレイク" ) || name == _T( "イナズマドライブ" ) )
+		{
+			option.m_weekHit = true;
+		}
 
 		// 特性「テクニシャン」で威力60以下の技は威力1.5倍
+		if ( atk.m_option.m_ability & PokemonAbility::ABILITY_TECHNICIAN )
+		{
+			if ( power <= 60 )
+			{
+				power *= ( 2048 + 4096 );
+				power += 0; // 切り捨てだった気がする？
+				power /= 4096;
+			}
+		}
 
 		// ミストフィールドでドラゴン技を使うと威力半減（ダメージ半減？どっち？）
+		if ( option.m_fieldStatus & CBattleSettings::BATTLE_FIELD_MISTY )
+		{
+			if ( m_moveDB[name].m_type == _T( "ドラゴン" ) )
+			{
+				power *= 2048;
+				power /= 4096;
+			}
+		}
 
 		// ヒートスタンプ、けたぐり、ヘビーボンバーは体重差によって威力決定
+		if ( name == _T( "ヒートスタンプ" ) || name == _T( "けたぐり" ) || name == _T( "ヘビーボンバー" ) )
+		{
+		}
 
 		// 無天候と晴れ以外の天候でのソーラービーム/ブレードは威力半減
+		if ( name == _T( "ソーラービーム" ) || name == _T( "ソーラーブレード" ) )
+		{
+			if ( ( option.m_weather != 0 ) && ( option.m_weather != 1 ) )
+			{
+				power *= 2048;
+				power /= 4096;
+			}
+		}
 
 		// おはかまいりは仲間が倒された回数で威力変動(専用の入力欄が必要)
 		// 同、ふんどのこぶしは攻撃を受けた回数で威力変動
@@ -271,19 +334,19 @@ public:
 			int power = m_moveDB[atkmove].m_power;
 			/* 以下、サイコフィールドでワイドフォースとか、ジャイロボールとか、そういうやつも計算する */
 			// ↓これも関数に入れた方が良い？？
-			if ( option.m_item & PokemonDataSub::ITEM_TYPE_ENHANCE )
+			if ( atk.m_option.m_item & PokemonDataSub::ITEM_TYPE_ENHANCE )
 			{
 				// タイプ強化アイテムなら威力4915/4096倍
 				power *= 4915; power /= 4096;
 			}
 			if ( ( m_moveDB[atkmove].m_category & PokeMove::PHYSICS_CHECK )
-				 && ( option.m_item & PokemonDataSub::ITEM_MUSCLEBAND ) )
+				 && ( atk.m_option.m_item & PokemonDataSub::ITEM_MUSCLEBAND ) )
 			{
 				// 物理技でちからのハチマキを持っている時は威力4505/4096倍
 				power *= 4505; power /= 4096;
 			}
 			if ( ( m_moveDB[atkmove].m_category & PokeMove::SPECIAL_CHECK )
-				 && ( option.m_item & PokemonDataSub::ITEM_WISEGLASSES ) )
+				 && ( atk.m_option.m_item & PokemonDataSub::ITEM_WISEGLASSES ) )
 			{
 				// 特殊技でものしりメガネを持っている時は威力4505/4096倍
 				power *= 4505; power /= 4096;
@@ -628,20 +691,20 @@ public:
 			}
 
 			/* STEP11-9. 達人の帯補正 */
-			if ( ( option.m_item & CBattleSettings::ABILITY_SNIPER )
+			if ( ( atk.m_option.m_item & CBattleSettings::ABILITY_SNIPER )
 				&& ( typecomp_res > 1.0 ) )
 			{
 				// 達人の帯が発動する時はダメージ1.2倍 -> 正確にはいくつ？4915？4916？
 			}
 
 			/* STEP11-10. メトロノーム補正 */
-			if ( option.m_item & CBattleSettings::ITEM_METRONOME )
+			if ( atk.m_option.m_item & CBattleSettings::ITEM_METRONOME )
 			{
 				// メトロノームで同じ技をN回使ったらダメージ上昇
 				std::vector<int> gain = { 4096, 4096, 4096, 4096, 4096, 8192 };
 				for ( int i = 0; i < 6; ++i )
 				{
-					if ( option.m_item & ( 1 << i ) )
+					if ( atk.m_option.m_item & ( 1 << i ) )
 					{
 						// iビット目がONならgain[i]倍になる
 						tmpresult[i] *= gain[i];
@@ -717,6 +780,10 @@ public:
 			/* LAST STEP. 計算結果を結果配列に突っ込む */
 			// 同じ技を重複してデータベースに登録してる問題をこっち側で解決する
 			result[atkmove] = tmpres2;
+
+			/* LAST STEP2. 後始末 */
+			// 特殊な計算をしたフラグをクリアする
+			option.specialCheckReset();
 		}
 
 		return ( result );
